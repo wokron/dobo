@@ -4,13 +4,17 @@ from sqlmodel import Session, select
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_core.documents import Document as PagedDocument
 from langchain_community.vectorstores import Chroma
+from langchain_community.chat_message_histories import SQLChatMessageHistory
+from langchain_core.messages import BaseMessage
 
+from app.core.config import settings
 from app.models import (
     Chat,
     ChatCreate,
     Document,
     DocumentSet,
     DocumentSetCreate,
+    MessageOut,
     Page,
 )
 from app.core import llm
@@ -60,3 +64,24 @@ def delete_vectors(*, doc: Document):
         embedding_function=llm.embeddings,
     )
     vector_store._collection.delete(ids=ids)
+
+
+def delete_chat_history(*, chat_id: int):
+    history = SQLChatMessageHistory(
+        session_id=chat_id,
+        connection_string=settings.DATABASE_URI,
+    )
+    history.clear()
+
+
+def get_chat_history(*, chat_id: int):
+    history = SQLChatMessageHistory(
+        session_id=chat_id,
+        connection_string=settings.DATABASE_URI,
+    )
+    messages: list[BaseMessage] = history.messages
+    messages_out: list[MessageOut] = []
+    for message in messages:
+        messages_out.append(MessageOut(role=message.type, content=message.content))
+
+    return messages_out
