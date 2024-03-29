@@ -1,9 +1,9 @@
 from fastapi import APIRouter, UploadFile
-from sqlmodel import delete
+from sqlmodel import delete, select
 
 from app import crud
 from app.api.deps import DocumentDep, DocumentSetDep, SessionDep
-from app.models import Document, DocumentOut, DocumentSetCreate, DocumentSetOut, Page
+from app.models import Document, DocumentOut, DocumentSet, DocumentSetCreate, DocumentSetOut, Page
 
 
 router = APIRouter()
@@ -26,7 +26,7 @@ def delete_document_set(session: SessionDep, docset: DocumentSetDep):
 
 @router.get("/", response_model=list[DocumentSetOut])
 def list_document_sets(session: SessionDep):
-    return crud.list_document_sets(session=session)
+    return session.exec(select(DocumentSet)).all()
 
 
 @router.post("/{docset_id}", response_model=list[DocumentOut])
