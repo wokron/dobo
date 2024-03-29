@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from sqlmodel import Session
 from app.core.db import engine
-from app.models import Document, DocumentSet
+from app.models import Chat, Document, DocumentSet
 
 
 def get_db():
@@ -35,3 +35,15 @@ def get_document(session: SessionDep, docset_id: int, doc_id: int):
 
 
 DocumentDep = Annotated[Document, Depends(get_document)]
+
+
+def get_chat(session: SessionDep, chat_id: int):
+    db_chat = session.get(Chat, chat_id)
+    if db_chat == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found"
+        )
+    return db_chat
+
+
+ChatDep = Annotated[Chat, Depends(get_chat)]

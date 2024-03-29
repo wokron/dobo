@@ -51,3 +51,18 @@ class Chat(SQLModel, table=True):
 class ChatCreate(SQLModel):
     name: str = Field(max_length=64)
     document_set_id: int
+
+
+class ChatOut(SQLModel):
+    id: int
+    name: str
+    document_set_id: int
+
+
+class MessageIn(SQLModel):
+    content: str
+
+
+class MessageOut(SQLModel):
+    role: str
+    content: str
