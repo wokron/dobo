@@ -9,6 +9,10 @@ class DocumentSet(SQLModel, table=True):
     documents: list["Document"] = Relationship(back_populates="document_set")
 
 
+class DocumentSetCreate(SQLModel):
+    name: str = Field(max_length=64)
+
+
 class Document(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(max_length=64, unique=True)
@@ -31,3 +35,8 @@ class Chat(SQLModel, table=True):
 
     document_set_id: int = Field(foreign_key="document_set.id")
     document_set: DocumentSet = Relationship(back_populates="chats")
+
+
+class ChatCreate(SQLModel):
+    name: str = Field(max_length=64)
+    document_set_id: int
