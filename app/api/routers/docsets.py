@@ -1,9 +1,20 @@
+from pathlib import Path
+import shutil
 from fastapi import APIRouter, UploadFile
+from fastapi.responses import FileResponse
 from sqlmodel import delete, select
 
 from app import crud
 from app.api.deps import DocumentDep, DocumentSetDep, SessionDep
-from app.models import Document, DocumentOut, DocumentSet, DocumentSetCreate, DocumentSetOut, Page
+from app.core.config import settings
+from app.models import (
+    Document,
+    DocumentOut,
+    DocumentSet,
+    DocumentSetCreate,
+    DocumentSetOut,
+    Page,
+)
 
 
 router = APIRouter()
@@ -11,7 +22,9 @@ router = APIRouter()
 
 @router.post("/", response_model=DocumentSetOut)
 def create_document_set(session: SessionDep, docset_create: DocumentSetCreate):
-    return crud.create_document_set(session=session, docset_create=docset_create)
+    db_docset = crud.create_document_set(session=session, docset_create=docset_create)
+    db_docset.get_save_path().mkdir(parents=True, exist_ok=True)
+    return db_docset
 
 
 @router.delete("/{docset_id}")
@@ -21,7 +34,8 @@ def delete_document_set(session: SessionDep, docset: DocumentSetDep):
         session.delete(doc)
     session.delete(docset)
     session.commit()
-    # TODO: delete files under the path of the document set
+    # delete files under the path of the document set
+    shutil.rmtree(docset.get_save_path())
 
 
 @router.get("/", response_model=list[DocumentSetOut])
@@ -33,11 +47,18 @@ def list_document_sets(session: SessionDep):
 def upload_documents(
     session: SessionDep, docset: DocumentSetDep, files: list[UploadFile]
 ):
+    new_docs: list[Document] = []
     for file in files:
-        docset.documents.append(Document(name=file.filename))
+        doc = Document(name=file.filename)
+        docset.documents.append(doc)
+        new_docs.append(doc)
     session.add(docset)
     session.commit()
-    # TODO: save document to fs
+
+    # save document to fs
+    for file, doc in zip(files, new_docs):
+        doc.get_save_path().write_bytes(file.file.read())
+
     # TODO: splite to pages, create pages and vectorize them
 
 
@@ -48,13 +69,17 @@ def list_documents(docset: DocumentSetDep):
 
 @router.get("/{docset_id}/docs/{doc_id}")
 def download_document(session: SessionDep, doc: DocumentDep):
-    # TODO: get path of document and retun
-    pass
+    # get path of document and retun
+    doc_path = doc.get_save_path()
+    return FileResponse(path=doc_path, filename=doc.name)
 
 
 @router.delete("/{docset_id}/docs/{doc_id}")
 def delete_document(session: SessionDep, doc: DocumentDep):
-    # TODO: remove document pages from vectorstore
     session.exec(delete(Page).where(Page.document_id == doc.id))
     session.delete(doc)
     session.commit()
+    # delete document from fs
+    doc.get_save_path().unlink()
+
+    # TODO: remove document pages from vectorstore

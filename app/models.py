@@ -1,4 +1,7 @@
+from pathlib import Path
 from sqlmodel import Field, Relationship, SQLModel
+
+from app.core.config import settings
 
 
 class DocumentSet(SQLModel, table=True):
@@ -7,6 +10,9 @@ class DocumentSet(SQLModel, table=True):
 
     chats: list["Chat"] = Relationship(back_populates="document_set")
     documents: list["Document"] = Relationship(back_populates="document_set")
+
+    def get_save_path(self) -> Path:
+        return Path(settings.DATA_DIR) / "docsets" / self.id
 
 
 class DocumentSetCreate(SQLModel):
@@ -25,6 +31,9 @@ class Document(SQLModel, table=True):
     document_set_id: int = Field(primary_key=True, foreign_key="document_set.id")
     document_set: DocumentSet = Relationship(back_populates="documents")
     pages: list["Page"] = Relationship(back_populates="document")
+
+    def get_save_path(self) -> Path:
+        return self.document_set.get_save_path() / "docs" / self.name
 
 
 class DocumentOut(SQLModel):
