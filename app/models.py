@@ -14,6 +14,9 @@ class DocumentSet(SQLModel, table=True):
     def get_save_path(self) -> Path:
         return Path(settings.DATA_DIR) / "docsets" / self.id
 
+    def get_vector_store_path(self) -> Path:
+        return self.get_save_path() / "vector.db"
+
 
 class DocumentSetCreate(SQLModel):
     name: str = Field(max_length=64)

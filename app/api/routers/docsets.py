@@ -58,8 +58,8 @@ def upload_documents(
     # save document to fs
     for file, doc in zip(files, new_docs):
         doc.get_save_path().write_bytes(file.file.read())
-
-    # TODO: splite to pages, create pages and vectorize them
+        # split document into pages, create pages and vectorize them
+        crud.create_pages_and_vectors(session=session, doc=doc)
 
 
 @router.get("/{docset_id}/docs", response_model=list[DocumentOut])
@@ -76,10 +76,10 @@ def download_document(session: SessionDep, doc: DocumentDep):
 
 @router.delete("/{docset_id}/docs/{doc_id}")
 def delete_document(session: SessionDep, doc: DocumentDep):
+    # remove pages from vector store
+    crud.delete_vectors(doc=doc)
     session.exec(delete(Page).where(Page.document_id == doc.id))
     session.delete(doc)
     session.commit()
     # delete document from fs
     doc.get_save_path().unlink()
-
-    # TODO: remove document pages from vectorstore
