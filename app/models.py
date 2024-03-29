@@ -13,6 +13,11 @@ class DocumentSetCreate(SQLModel):
     name: str = Field(max_length=64)
 
 
+class DocumentSetOut(SQLModel):
+    id: int
+    name: str
+
+
 class Document(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(max_length=64, unique=True)
@@ -20,6 +25,12 @@ class Document(SQLModel, table=True):
     document_set_id: int = Field(primary_key=True, foreign_key="document_set.id")
     document_set: DocumentSet = Relationship(back_populates="documents")
     pages: list["Page"] = Relationship(back_populates="document")
+
+
+class DocumentOut(SQLModel):
+    id: int
+    name: str
+    document_set_id: int
 
 
 class Page(SQLModel, table=True):
