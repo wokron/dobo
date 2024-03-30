@@ -1,3 +1,5 @@
+from pathlib import Path
+import shutil
 import pytest
 from sqlmodel import Session, delete
 
@@ -11,8 +13,15 @@ def session():
         yield session
 
 
+@pytest.fixture(scope="session", autouse=True)
+def wrapper_session():
+    yield
+    Path("./database.db").unlink(missing_ok=True)
+    shutil.rmtree("./chroma", ignore_errors=True)
+
+
 @pytest.fixture(scope="module", autouse=True)
-def wrapper(session: Session):
+def wrapper_module(session: Session):
     yield
     session.exec(delete(DocumentSet))
     session.exec(delete(Document))
@@ -27,3 +36,11 @@ def docset(session: Session):
     session.add(db_docset)
     session.commit()
     return db_docset
+
+
+@pytest.fixture(scope="module", autouse=True)
+def doc(session: Session, docset: DocumentSet):
+    db_doc = Document(name="doc", document_set=docset)
+    session.add(db_doc)
+    session.commit()
+    return db_doc

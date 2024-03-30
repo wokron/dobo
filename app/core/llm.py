@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -10,6 +11,7 @@ from langchain_community.chat_message_histories import SQLChatMessageHistory
 
 from app.core.config import settings
 
+os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 
 embeddings = HuggingFaceBgeEmbeddings(
     model_name="BAAI/bge-small-en",
