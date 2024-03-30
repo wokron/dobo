@@ -31,7 +31,7 @@ class Document(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(max_length=64, unique=True)
 
-    document_set_id: int = Field(primary_key=True, foreign_key="document_set.id")
+    document_set_id: int = Field(foreign_key="documentset.id")
     document_set: DocumentSet = Relationship(back_populates="documents")
     pages: list["Page"] = Relationship(back_populates="document")
 
@@ -56,7 +56,7 @@ class Chat(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(max_length=64, unique=True)
 
-    document_set_id: int = Field(foreign_key="document_set.id")
+    document_set_id: int = Field(foreign_key="documentset.id")
     document_set: DocumentSet = Relationship(back_populates="chats")
 
 

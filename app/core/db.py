@@ -1,5 +1,8 @@
-from sqlmodel import create_engine
+from sqlmodel import SQLModel, create_engine
 
-from app.core.config import Settings
+from app.core.config import settings
+from app import models  # don't remove this
 
-engine = create_engine(str(Settings.SQLALCHEMY_DATABASE_URI))
+engine = create_engine(str(settings.DATABASE_URI))
+
+SQLModel.metadata.create_all(engine)
