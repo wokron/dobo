@@ -19,3 +19,11 @@ def wrapper(session: Session):
     session.exec(delete(Page))
     session.exec(delete(Chat))
     session.commit()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def docset(session: Session):
+    db_docset = DocumentSet(name="docset")
+    session.add(db_docset)
+    session.commit()
+    return db_docset

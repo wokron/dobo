@@ -4,14 +4,6 @@ from sqlmodel import Session, select, delete
 from app.models import Document, Page, DocumentSet
 
 
-@pytest.fixture(scope="module", autouse=True)
-def docset(session: Session):
-    db_docset = DocumentSet(name="docset1")
-    session.add(db_docset)
-    session.commit()
-    return db_docset
-
-
 def test_create_document(session: Session, docset: DocumentSet):
     db_doc = Document(name="doc1", document_set=docset)
     session.add(db_doc)
