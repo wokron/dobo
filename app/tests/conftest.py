@@ -9,8 +9,13 @@ from app.core.db import engine
 def session():
     with Session(engine) as session:
         yield session
-        session.exec(delete(DocumentSet))
-        session.exec(delete(Document))
-        session.exec(delete(Page))
-        session.exec(delete(Chat))
-        session.commit()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def wrapper(session: Session):
+    yield
+    session.exec(delete(DocumentSet))
+    session.exec(delete(Document))
+    session.exec(delete(Page))
+    session.exec(delete(Chat))
+    session.commit()

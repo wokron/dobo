@@ -48,7 +48,7 @@ class DocumentOut(SQLModel):
 class Page(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
-    document_id: int = Field(primary_key=True, foreign_key="document.id")
+    document_id: int = Field(foreign_key="document.id")
     document: Document = Relationship(back_populates="pages")
 
 

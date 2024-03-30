@@ -1,4 +1,4 @@
-from sqlmodel import Session
+from sqlmodel import Session, delete
 
 from app.models import Document, DocumentSet
 
