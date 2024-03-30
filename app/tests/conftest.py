@@ -17,8 +17,7 @@ def session():
 @pytest.fixture(scope="session", autouse=True)
 def wrapper_session():
     yield
-    Path("./database.db").unlink(missing_ok=True)
-    shutil.rmtree("./chroma", ignore_errors=True)
+    Path("database.db").unlink(missing_ok=True)
     shutil.rmtree(settings.DATA_DIR, ignore_errors=True)
 
 
@@ -29,6 +28,7 @@ def wrapper_module(session: Session):
     session.exec(delete(Document))
     session.exec(delete(Chat))
     session.commit()
+    Path("memory.db").unlink(missing_ok=True)
 
 
 @pytest.fixture(scope="module", autouse=True)

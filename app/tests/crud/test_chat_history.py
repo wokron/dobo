@@ -8,7 +8,7 @@ from app.core.config import settings
 def test_add_chat_history():
     memory: BaseChatMessageHistory = SQLChatMessageHistory(
         session_id=1,
-        connection_string=settings.DATABASE_URI,
+        connection_string=settings.MEMORY_URL,
     )
 
     memory.add_ai_message("here is ai")
@@ -20,14 +20,14 @@ def test_add_chat_history():
 def test_load_chat_history():
     memory: BaseChatMessageHistory = SQLChatMessageHistory(
         session_id=1,
-        connection_string=settings.DATABASE_URI,
+        connection_string=settings.MEMORY_URL,
     )
 
     assert len(memory.messages) == 2
 
     memory2: BaseChatMessageHistory = SQLChatMessageHistory(
         session_id=2,
-        connection_string=settings.DATABASE_URI,
+        connection_string=settings.MEMORY_URL,
     )
 
     assert len(memory2.messages) == 0
@@ -46,7 +46,7 @@ def test_delete_chat_history():
     crud.delete_chat_history(chat_id=1)
     memory: BaseChatMessageHistory = SQLChatMessageHistory(
         session_id=1,
-        connection_string=settings.DATABASE_URI,
+        connection_string=settings.MEMORY_URL,
     )
 
     assert len(memory.messages) == 0

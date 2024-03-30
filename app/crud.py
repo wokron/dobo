@@ -1,11 +1,16 @@
 from pathlib import Path
 
-from sqlmodel import Session, select
-from langchain_community.document_loaders import PyMuPDFLoader
+from sqlmodel import Session
 from langchain_core.documents import Document as PagedDocument
+from langchain_core.messages import BaseMessage
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.runnables import RunnableLambda, RunnableConfig
+from langchain.chains import create_history_aware_retriever, create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_community.vectorstores import Chroma
 from langchain_community.chat_message_histories import SQLChatMessageHistory
-from langchain_core.messages import BaseMessage
+
 
 from app.core.config import settings
 from app.models import (
@@ -75,7 +80,7 @@ def remove_document_from_vector_store(*, doc: Document):
 def delete_chat_history(*, chat_id: int):
     history = SQLChatMessageHistory(
         session_id=chat_id,
-        connection_string=settings.DATABASE_URI,
+        connection_string=settings.MEMORY_URL,
     )
     history.clear()
 
@@ -83,7 +88,7 @@ def delete_chat_history(*, chat_id: int):
 def get_chat_history(*, chat_id: int):
     history = SQLChatMessageHistory(
         session_id=chat_id,
-        connection_string=settings.DATABASE_URI,
+        connection_string=settings.MEMORY_URL,
     )
     messages: list[BaseMessage] = history.messages
     messages_out: list[MessageOut] = []
@@ -91,3 +96,31 @@ def get_chat_history(*, chat_id: int):
         messages_out.append(MessageOut(role=message.type, content=message.content))
 
     return messages_out
+
+
+def create_chain(model):
+    def select_retriever(text: str, config: RunnableConfig):
+        vectorstore = Chroma(
+            persist_directory=config["configurable"]["vectorstore"],
+            embedding_function=llm.embeddings,
+        )
+        return vectorstore.as_retriever()
+
+    retriever = RunnableLambda(select_retriever)
+    retriever_chain = create_history_aware_retriever(
+        model, retriever, llm.RETRIEVER_PROMPT
+    )
+    document_chain = create_stuff_documents_chain(model, llm.ANSWER_PROMPT)
+    retrieval_chain = create_retrieval_chain(retriever_chain, document_chain)
+
+    retrieval_chain_with_chat_history = RunnableWithMessageHistory(
+        retrieval_chain,
+        lambda session_id: SQLChatMessageHistory(
+            session_id=session_id, connection_string=settings.DATABASE_URI
+        ),
+        input_messages_key="input",
+        history_messages_key="chat_history",
+        output_messages_key="answer",
+    )
+
+    return retrieval_chain_with_chat_history
