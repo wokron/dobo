@@ -32,8 +32,8 @@ def get_document_set(session: SessionDep, docset_id: int):
 DocumentSetDep = Annotated[DocumentSet, Depends(get_document_set)]
 
 
-def get_document(session: SessionDep, docset_id: int, doc_id: int):
-    db_doc = session.get(Document, (doc_id, docset_id))
+def get_document(session: SessionDep, doc_id: int):
+    db_doc = session.get(Document, doc_id)
     if db_doc == None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Document not found"

@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.get("/{doc_id}")
-def download_document(session: SessionDep, doc: DocumentDep):
+def download_document(doc: DocumentDep):
     # get path of document and retun
     doc_path = doc.get_save_path()
     return FileResponse(path=doc_path, filename=doc.name)
