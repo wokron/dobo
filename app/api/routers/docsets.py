@@ -65,21 +65,3 @@ def upload_documents(
 @router.get("/{docset_id}/docs", response_model=list[DocumentOut])
 def list_documents(docset: DocumentSetDep):
     return docset.documents
-
-
-@router.get("/{docset_id}/docs/{doc_id}")
-def download_document(session: SessionDep, doc: DocumentDep):
-    # get path of document and retun
-    doc_path = doc.get_save_path()
-    return FileResponse(path=doc_path, filename=doc.name)
-
-
-@router.delete("/{docset_id}/docs/{doc_id}")
-def delete_document(session: SessionDep, doc: DocumentDep):
-    # remove pages from vector store
-    crud.remove_document_from_vector_store(doc=doc)
-    session.exec(delete(Page).where(Page.document_id == doc.id))
-    session.delete(doc)
-    session.commit()
-    # delete document from fs
-    doc.get_save_path().unlink()
