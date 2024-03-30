@@ -80,7 +80,7 @@ def remove_document_from_vector_store(*, doc: Document):
 def delete_chat_history(*, chat_id: int):
     history = SQLChatMessageHistory(
         session_id=chat_id,
-        connection_string=settings.MEMORY_URL,
+        connection_string=settings.memory_url,
     )
     history.clear()
 
@@ -88,7 +88,7 @@ def delete_chat_history(*, chat_id: int):
 def get_chat_history(*, chat_id: int):
     history = SQLChatMessageHistory(
         session_id=chat_id,
-        connection_string=settings.MEMORY_URL,
+        connection_string=settings.memory_url,
     )
     messages: list[BaseMessage] = history.messages
     messages_out: list[MessageOut] = []
@@ -116,7 +116,7 @@ def create_chain(model):
     retrieval_chain_with_chat_history = RunnableWithMessageHistory(
         retrieval_chain,
         lambda session_id: SQLChatMessageHistory(
-            session_id=session_id, connection_string=settings.DATABASE_URI
+            session_id=session_id, connection_string=settings.database_url
         ),
         input_messages_key="input",
         history_messages_key="chat_history",

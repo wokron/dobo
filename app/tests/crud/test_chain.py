@@ -6,6 +6,7 @@ from sqlmodel import Session
 
 
 from app import crud
+from app.api.deps import get_chain
 from app.models import Document
 from app.core.config import settings
 
@@ -13,7 +14,7 @@ from app.core.config import settings
 def test_create_chain(session: Session, doc: Document):
     memory: BaseChatMessageHistory = SQLChatMessageHistory(
         session_id=3,
-        connection_string=settings.MEMORY_URL,
+        connection_string=settings.memory_url,
     )
 
     memory.clear()
@@ -54,3 +55,7 @@ def test_create_chain(session: Session, doc: Document):
     )
 
     assert result["answer"] == "I don't know"
+
+
+def test_dynamic_import():
+    _ = get_chain()

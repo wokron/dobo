@@ -18,7 +18,7 @@ def session():
 def wrapper_session():
     yield
     Path("database.db").unlink(missing_ok=True)
-    shutil.rmtree(settings.DATA_DIR, ignore_errors=True)
+    shutil.rmtree(settings.data_dir, ignore_errors=True)
 
 
 @pytest.fixture(scope="module", autouse=True)

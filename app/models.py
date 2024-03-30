@@ -12,7 +12,7 @@ class DocumentSet(SQLModel, table=True):
     documents: list["Document"] = Relationship(back_populates="document_set")
 
     def get_save_path(self):
-        return Path(settings.DATA_DIR) / "docsets" / str(self.id)
+        return Path(settings.data_dir) / "docsets" / str(self.id)
 
     def get_vector_store_path(self):
         return self.get_save_path() / "chroma"
