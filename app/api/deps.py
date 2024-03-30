@@ -1,6 +1,10 @@
+from functools import lru_cache
 from typing import Annotated
+
 from fastapi import Depends, HTTPException, status
 from sqlmodel import Session
+from langchain_core.runnables import Runnable
+
 from app.core.db import engine
 from app.models import Chat, Document, DocumentSet
 
@@ -47,3 +51,11 @@ def get_chat(session: SessionDep, chat_id: int):
 
 
 ChatDep = Annotated[Chat, Depends(get_chat)]
+
+
+@lru_cache
+def get_chain() -> Runnable:
+    return None
+
+
+ChainDep = Annotated[Runnable, Depends(get_chain)]

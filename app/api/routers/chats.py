@@ -1,8 +1,7 @@
 from fastapi import APIRouter
 
 from app import crud
-from app.api.deps import ChatDep, SessionDep
-from app.core.llm import build_chain
+from app.api.deps import ChainDep, ChatDep, SessionDep
 from app.models import ChatCreate, ChatOut, MessageIn, MessageOut
 
 
@@ -15,11 +14,16 @@ def create_chat(session: SessionDep, chat_create: ChatCreate):
 
 
 @router.post("/{chat_id}", response_model=MessageOut)
-def post_message(chat: ChatDep, message: MessageIn):
+def post_message(chain: ChainDep, chat: ChatDep, message: MessageIn):
     # invoke the llm chain and return llm's answer
-    chain = build_chain(chat.document_set.get_vector_store_path())
     result = chain.invoke(
-        {"input": message.content}, config={"configurable": {"session_id": chat.id}}
+        {"input": message.content},
+        config={
+            "configurable": {
+                "session_id": chat.id,
+                "vectorstore": str(chat.document_set.get_vector_store_path()),
+            }
+        },
     )
     return MessageOut(role="ai", content=result["answer"])
 
