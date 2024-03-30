@@ -4,7 +4,6 @@ from sqlmodel import delete
 
 from app import crud
 from app.api.deps import DocumentDep, SessionDep
-from app.models import Page
 
 
 router = APIRouter()
@@ -21,7 +20,6 @@ def download_document(session: SessionDep, doc: DocumentDep):
 def delete_document(session: SessionDep, doc: DocumentDep):
     # remove pages from vector store
     crud.remove_document_from_vector_store(doc=doc)
-    session.exec(delete(Page).where(Page.document_id == doc.id))
     session.delete(doc)
     session.commit()
     # delete document from fs

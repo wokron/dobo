@@ -13,7 +13,6 @@ from app.models import (
     DocumentSet,
     DocumentSetCreate,
     DocumentSetOut,
-    Page,
 )
 
 
@@ -29,9 +28,7 @@ def create_document_set(session: SessionDep, docset_create: DocumentSetCreate):
 
 @router.delete("/{docset_id}")
 def delete_document_set(session: SessionDep, docset: DocumentSetDep):
-    for doc in docset.documents:
-        session.exec(delete(Page).where(Page.document_id == doc.id))
-        session.delete(doc)
+    session.exec(delete(Document).where(Document.document_set_id == docset.id))
     session.delete(docset)
     session.commit()
     # delete files under the path of the document set

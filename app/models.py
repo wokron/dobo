@@ -34,7 +34,6 @@ class Document(SQLModel, table=True):
 
     document_set_id: int = Field(foreign_key="documentset.id")
     document_set: DocumentSet = Relationship(back_populates="documents")
-    pages: list["Page"] = Relationship(back_populates="document")
 
     def get_save_path(self):
         return self.document_set.get_save_path() / "docs" / self.name
@@ -44,13 +43,6 @@ class DocumentOut(SQLModel):
     id: int
     name: str
     document_set_id: int
-
-
-class Page(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-
-    document_id: int = Field(foreign_key="document.id")
-    document: Document = Relationship(back_populates="pages")
 
 
 class Chat(SQLModel, table=True):

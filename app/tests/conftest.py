@@ -4,7 +4,7 @@ import pytest
 from sqlmodel import Session, delete
 
 from app.core.config import settings
-from app.models import Chat, Document, DocumentSet, Page
+from app.models import Chat, Document, DocumentSet
 from app.core.db import engine
 
 
@@ -27,7 +27,6 @@ def wrapper_module(session: Session):
     yield
     session.exec(delete(DocumentSet))
     session.exec(delete(Document))
-    session.exec(delete(Page))
     session.exec(delete(Chat))
     session.commit()
 
