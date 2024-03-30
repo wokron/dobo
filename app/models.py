@@ -14,6 +14,9 @@ class DocumentSet(SQLModel, table=True):
     def get_save_path(self):
         return Path(settings.data_dir) / "docsets" / str(self.id)
 
+    def get_documents_path(self):
+        return self.get_save_path() / "docs"
+
     def get_vector_store_path(self):
         return self.get_save_path() / "chroma"
 
@@ -36,7 +39,9 @@ class Document(SQLModel, table=True):
     document_set: DocumentSet = Relationship(back_populates="documents")
 
     def get_save_path(self):
-        return self.document_set.get_save_path() / "docs" / self.name
+        documents_path: Path = self.document_set.get_documents_path()
+        documents_path.mkdir(parents=True, exist_ok=True)
+        return documents_path / self.name
 
 
 class DocumentOut(SQLModel):

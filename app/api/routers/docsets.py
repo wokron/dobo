@@ -40,7 +40,7 @@ def list_document_sets(session: SessionDep):
     return session.exec(select(DocumentSet)).all()
 
 
-@router.post("/{docset_id}", response_model=list[DocumentOut])
+@router.post("/{docset_id}/docs", response_model=list[DocumentOut])
 def upload_documents(
     session: SessionDep, docset: DocumentSetDep, files: list[UploadFile]
 ):
@@ -57,6 +57,8 @@ def upload_documents(
         doc.get_save_path().write_bytes(file.file.read())
         # split document into pages, create pages and vectorize them
         crud.load_document_to_vector_store(session=session, doc=doc)
+
+    return new_docs
 
 
 @router.get("/{docset_id}/docs", response_model=list[DocumentOut])

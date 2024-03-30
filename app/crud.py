@@ -41,7 +41,7 @@ def create_chat(*, session: Session, chat_create: ChatCreate):
 
 
 def load_document_to_vector_store(*, session: Session, doc: Document):
-    paged_docs: list[PagedDocument] = PyMuPDFLoader(doc.get_save_path()).load()
+    paged_docs: list[PagedDocument] = PyMuPDFLoader(str(doc.get_save_path())).load()
 
     add_paged_documents(session=session, doc=doc, paged_docs=paged_docs)
 
