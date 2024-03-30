@@ -11,11 +11,11 @@ class DocumentSet(SQLModel, table=True):
     chats: list["Chat"] = Relationship(back_populates="document_set")
     documents: list["Document"] = Relationship(back_populates="document_set")
 
-    def get_save_path(self) -> Path:
-        return Path(settings.DATA_DIR) / "docsets" / self.id
+    def get_save_path(self):
+        return Path(settings.DATA_DIR) / "docsets" / str(self.id)
 
-    def get_vector_store_path(self) -> Path:
-        return self.get_save_path() / "vector.db"
+    def get_vector_store_path(self):
+        return self.get_save_path() / "chroma"
 
 
 class DocumentSetCreate(SQLModel):
@@ -30,12 +30,13 @@ class DocumentSetOut(SQLModel):
 class Document(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(max_length=64, unique=True)
+    page_num: int | None = Field(default=None, ge=0)
 
     document_set_id: int = Field(foreign_key="documentset.id")
     document_set: DocumentSet = Relationship(back_populates="documents")
     pages: list["Page"] = Relationship(back_populates="document")
 
-    def get_save_path(self) -> Path:
+    def get_save_path(self):
         return self.document_set.get_save_path() / "docs" / self.name
 
 

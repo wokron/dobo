@@ -3,6 +3,7 @@ import shutil
 import pytest
 from sqlmodel import Session, delete
 
+from app.core.config import settings
 from app.models import Chat, Document, DocumentSet, Page
 from app.core.db import engine
 
@@ -18,6 +19,7 @@ def wrapper_session():
     yield
     Path("./database.db").unlink(missing_ok=True)
     shutil.rmtree("./chroma", ignore_errors=True)
+    shutil.rmtree(settings.DATA_DIR, ignore_errors=True)
 
 
 @pytest.fixture(scope="module", autouse=True)

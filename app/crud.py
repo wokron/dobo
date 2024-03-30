@@ -37,50 +37,37 @@ def create_chat(*, session: Session, chat_create: ChatCreate):
 
 
 def load_document_to_vector_store(*, session: Session, doc: Document):
-    vector_store_path: Path = doc.document_set.get_vector_store_path()
     paged_docs: list[PagedDocument] = PyMuPDFLoader(doc.get_save_path()).load()
-    create_pages_and_vectors(
-        session=session,
-        doc_id=doc.id,
-        paged_docs=paged_docs,
-        vector_store_path=vector_store_path,
-    )
+
+    add_paged_documents(session=session, doc=doc, paged_docs=paged_docs)
 
 
-def create_pages_and_vectors(
+def add_paged_documents(
     *,
     session: Session,
-    doc_id: int,
+    doc: Document,
     paged_docs: list[PagedDocument],
-    vector_store_path: Path,
 ):
-    db_pages: list[Page] = []
-    for _ in range(len(paged_docs)):
-        db_pages.append(Page(document_id=doc_id))
-    session.add_all(db_pages)
+    doc.page_num = len(paged_docs)
+    session.add(doc)
     session.commit()
-    # TODO: use str id like `doc<doc_id>_page<page_num>` instead of a number
-    ids = [str(page.id) for page in db_pages]
 
+    ids = [f"doc{doc.id}_page{no}" for no in range(doc.page_num)]
+    vector_store_path: Path = doc.document_set.get_vector_store_path()
     Chroma.from_documents(
         paged_docs,
         llm.embeddings,
         ids=ids,
-        persist_directory=vector_store_path,
+        persist_directory=str(vector_store_path),
     )
 
 
 def remove_document_from_vector_store(*, doc: Document):
     vector_store_path: Path = doc.document_set.get_vector_store_path()
-    # TODO: use str id like `doc<doc_id>_page<page_num>` instead of a number
-    ids = [str(page.id) for page in doc.pages]
+    ids = [f"doc{doc.id}_page{no}" for no in range(doc.page_num)]
 
-    delete_vectors(vector_store_path=vector_store_path, ids=ids)
-
-
-def delete_vectors(*, ids: list[str], vector_store_path: Path):
     vector_store = Chroma(
-        persist_directory=vector_store_path,
+        persist_directory=str(vector_store_path),
         embedding_function=llm.embeddings,
     )
     vector_store._collection.delete(ids=ids)
