@@ -29,6 +29,7 @@ def create_document_set(*, session: Session, docset_create: DocumentSetCreate):
     session.add(db_docset)
     session.commit()
     session.refresh(db_docset)
+    db_docset.get_save_path().mkdir(parents=True, exist_ok=True)
     return db_docset
 
 

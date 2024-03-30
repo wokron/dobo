@@ -1,6 +1,6 @@
 from pathlib import Path
 import shutil
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, BackgroundTasks, UploadFile
 from fastapi.responses import FileResponse
 from sqlmodel import delete, select
 
@@ -22,7 +22,6 @@ router = APIRouter()
 @router.post("/", response_model=DocumentSetOut)
 def create_document_set(session: SessionDep, docset_create: DocumentSetCreate):
     db_docset = crud.create_document_set(session=session, docset_create=docset_create)
-    db_docset.get_save_path().mkdir(parents=True, exist_ok=True)
     return db_docset
 
 
@@ -42,7 +41,10 @@ def list_document_sets(session: SessionDep):
 
 @router.post("/{docset_id}/docs", response_model=list[DocumentOut])
 def upload_documents(
-    session: SessionDep, docset: DocumentSetDep, files: list[UploadFile]
+    session: SessionDep,
+    docset: DocumentSetDep,
+    files: list[UploadFile],
+    background_tasks: BackgroundTasks,
 ):
     new_docs: list[Document] = []
     for file in files:

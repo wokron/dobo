@@ -1,11 +1,13 @@
 from pathlib import Path
 import shutil
+from fastapi.testclient import TestClient
 import pytest
 from sqlmodel import Session, delete
 
 from app.core.config import settings
 from app.models import Chat, Document, DocumentSet
 from app.core.db import engine
+from app.main import app
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -29,6 +31,12 @@ def wrapper_module(session: Session):
     session.exec(delete(Chat))
     session.commit()
     Path("memory.db").unlink(missing_ok=True)
+
+
+@pytest.fixture(scope="module")
+def client():
+    with TestClient(app) as c:
+        yield c
 
 
 @pytest.fixture(scope="module", autouse=True)
