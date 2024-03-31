@@ -40,7 +40,6 @@ class Document(SQLModel, table=True):
 
     def get_save_path(self):
         documents_path: Path = self.document_set.get_documents_path()
-        documents_path.mkdir(parents=True, exist_ok=True)
         return documents_path / self.name
 
 

@@ -34,7 +34,7 @@ def test_load_chat_history():
 
 
 def test_get_chat_history():
-    messages = crud.get_chat_history(chat_id=1)
+    messages = crud.list_chat_history(chat_id=1)
     assert len(messages) == 2
     assert [message.model_dump() for message in messages] == [
         {"role": "ai", "content": "here is ai"},

@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 from fastapi.responses import FileResponse
-from sqlmodel import delete
 
 from app import crud
 from app.api.deps import DocumentDep, SessionDep
@@ -18,9 +17,4 @@ def download_document(doc: DocumentDep):
 
 @router.delete("/{doc_id}")
 def delete_document(session: SessionDep, doc: DocumentDep):
-    # remove pages from vector store
-    crud.remove_document_from_vector_store(doc=doc)
-    session.delete(doc)
-    session.commit()
-    # delete document from fs
-    doc.get_save_path().unlink()
+    crud.delete_document(session, doc)

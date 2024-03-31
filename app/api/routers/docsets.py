@@ -1,12 +1,8 @@
-from pathlib import Path
-import shutil
-from fastapi import APIRouter, BackgroundTasks, UploadFile
-from fastapi.responses import FileResponse
-from sqlmodel import delete, select
+from fastapi import APIRouter, UploadFile
+from sqlmodel import select
 
 from app import crud
-from app.api.deps import DocumentDep, DocumentSetDep, SessionDep
-from app.core.config import settings
+from app.api.deps import DocumentSetDep, SessionDep
 from app.models import (
     Document,
     DocumentOut,
@@ -27,11 +23,7 @@ def create_document_set(session: SessionDep, docset_create: DocumentSetCreate):
 
 @router.delete("/{docset_id}")
 def delete_document_set(session: SessionDep, docset: DocumentSetDep):
-    session.exec(delete(Document).where(Document.document_set_id == docset.id))
-    session.delete(docset)
-    session.commit()
-    # delete files under the path of the document set
-    shutil.rmtree(docset.get_save_path())
+    crud.delete_document_set(session, docset)
 
 
 @router.get("/", response_model=list[DocumentSetOut])
@@ -44,21 +36,10 @@ def upload_documents(
     session: SessionDep,
     docset: DocumentSetDep,
     files: list[UploadFile],
-    background_tasks: BackgroundTasks,
 ):
     new_docs: list[Document] = []
     for file in files:
-        doc = Document(name=file.filename)
-        docset.documents.append(doc)
-        new_docs.append(doc)
-    session.add(docset)
-    session.commit()
-
-    # save document to fs
-    for file, doc in zip(files, new_docs):
-        doc.get_save_path().write_bytes(file.file.read())
-        # split document into pages, create pages and vectorize them
-        crud.load_document_to_vector_store(session=session, doc=doc)
+        new_docs.append(crud.create_document(session, file, docset.id))
 
     return new_docs
 
