@@ -21,7 +21,7 @@ def test_create_pages_and_vectors(session: Session, doc: Document):
     )
 
     vectorstore = Chroma(
-        persist_directory=str(doc.document_set.get_vectorstore_path()),
+        persist_directory=str(doc.document_set.get_vectorstore_dir()),
         embedding_function=llm.embeddings,
     )
     assert vectorstore._collection.count() == 3
@@ -43,7 +43,7 @@ def test_delete_vectors(session: Session, docset):
     )
 
     vectorstore = Chroma(
-        persist_directory=str(doc2.document_set.get_vectorstore_path()),
+        persist_directory=str(doc2.document_set.get_vectorstore_dir()),
         embedding_function=llm.embeddings,
     )
     assert vectorstore._collection.count() == 6

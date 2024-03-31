@@ -39,7 +39,7 @@ def test_create_chain(session: Session, doc: Document):
         config={
             "configurable": {
                 "session_id": 3,
-                "vectorstore": str(doc.document_set.get_vectorstore_path()),
+                "vectorstore": str(doc.document_set.get_vectorstore_dir()),
             }
         },
     )
@@ -51,7 +51,7 @@ def test_create_chain(session: Session, doc: Document):
         config={
             "configurable": {
                 "session_id": 3,
-                "vectorstore": str(doc.document_set.get_vectorstore_path()),
+                "vectorstore": str(doc.document_set.get_vectorstore_dir()),
             }
         },
     )

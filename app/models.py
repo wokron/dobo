@@ -11,14 +11,14 @@ class DocumentSet(SQLModel, table=True):
     chats: list["Chat"] = Relationship(back_populates="document_set")
     documents: list["Document"] = Relationship(back_populates="document_set")
 
-    def get_save_path(self):
+    def get_save_dir(self):
         return Path(settings.data_dir) / "docsets" / str(self.id)
 
-    def get_documents_path(self):
-        return self.get_save_path() / "docs"
+    def get_documents_dir(self):
+        return self.get_save_dir() / "docs"
 
-    def get_vectorstore_path(self):
-        return self.get_save_path() / "chroma"
+    def get_vectorstore_dir(self):
+        return self.get_save_dir() / "chroma"
 
 
 class DocumentSetCreate(SQLModel):
@@ -39,7 +39,7 @@ class Document(SQLModel, table=True):
     document_set: DocumentSet = Relationship(back_populates="documents")
 
     def get_save_path(self):
-        documents_path: Path = self.document_set.get_documents_path()
+        documents_path: Path = self.document_set.get_documents_dir()
         return documents_path / self.name
 
 

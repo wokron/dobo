@@ -29,9 +29,9 @@ def create_document_set(session: Session, docset_create: DocumentSetCreate):
     session.commit()
     session.refresh(db_docset)
 
-    db_docset.get_save_path().mkdir(parents=True, exist_ok=True)
-    db_docset.get_documents_path().mkdir(exist_ok=True)
-    db_docset.get_vectorstore_path().mkdir(exist_ok=True)
+    db_docset.get_save_dir().mkdir(parents=True, exist_ok=True)
+    db_docset.get_documents_dir().mkdir(exist_ok=True)
+    db_docset.get_vectorstore_dir().mkdir(exist_ok=True)
     return db_docset
 
 
@@ -40,7 +40,7 @@ def delete_document_set(session: Session, docset: DocumentSet):
     session.delete(docset)
     session.commit()
     # delete files under the path of the document set
-    shutil.rmtree(docset.get_save_path())
+    shutil.rmtree(docset.get_save_dir())
 
 
 def create_document(session: Session, file: UploadFile, docset_id: int):
@@ -81,7 +81,7 @@ def post_message_in_chat(chat: Chat, message: MessageIn):
         config={
             "configurable": {
                 "session_id": chat.id,
-                "vectorstore": str(chat.document_set.get_vectorstore_path()),
+                "vectorstore": str(chat.document_set.get_vectorstore_dir()),
             }
         },
     )
@@ -124,7 +124,7 @@ def _save_pages_to_vectorstore(
     session.commit()
 
     ids = [f"doc{doc.id}_page{no}" for no in range(doc.page_num)]
-    vectorstore_path: Path = doc.document_set.get_vectorstore_path()
+    vectorstore_path: Path = doc.document_set.get_vectorstore_dir()
     Chroma.from_documents(
         paged_docs,
         llm.embeddings,
@@ -134,7 +134,7 @@ def _save_pages_to_vectorstore(
 
 
 def _remove_from_vectorstore(doc: Document):
-    vectorstore_path: Path = doc.document_set.get_vectorstore_path()
+    vectorstore_path: Path = doc.document_set.get_vectorstore_dir()
     ids = [f"doc{doc.id}_page{no}" for no in range(doc.page_num)]
 
     vectorstore = Chroma(
