@@ -1,12 +1,18 @@
+from pathlib import Path
 from typing import Any, Tuple, Type
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
+import dotenv
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
     TomlConfigSettingsSource,
 )
+
+dotenv.load_dotenv(".env")
+
+DEFAULT_DATABASE_FILE = "database.db"
+DEFAULT_MEMORY_FILE = "memory.db"
 
 
 class EmbeddingsSettings(BaseSettings):
@@ -19,15 +25,21 @@ class LLMSettings(BaseSettings):
     config: dict[str, Any] = {"responses": ["I don't know"]}
 
 
+class ChainSettings(BaseSettings):
+    verbose: bool = False
+    debug: bool = False
+
+
 class Settings(BaseSettings):
-    database_url: str = "sqlite:///database.db"
-    memory_url: str = "sqlite:///memory.db"
-    data_dir: str = "./data"
+    model_config = SettingsConfigDict(toml_file="config.toml")
+
+    database_url: str = f"sqlite:///{DEFAULT_DATABASE_FILE}"
+    memory_url: str = f"sqlite:///{DEFAULT_MEMORY_FILE}"
+    data_dir: Path = "./data"
 
     llm: LLMSettings = LLMSettings()
     embeddings: EmbeddingsSettings = EmbeddingsSettings()
-
-    model_config = SettingsConfigDict(env_file=".env", toml_file="config.toml")
+    chain: ChainSettings = ChainSettings()
 
     @classmethod
     def settings_customise_sources(

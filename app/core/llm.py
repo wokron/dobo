@@ -1,4 +1,5 @@
 from importlib import import_module
+
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables import RunnableLambda, RunnableConfig
@@ -6,8 +7,12 @@ from langchain.chains import create_history_aware_retriever, create_retrieval_ch
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_community.vectorstores import Chroma
 from langchain_community.chat_message_histories import SQLChatMessageHistory
+from langchain.globals import set_debug, set_verbose
 
 from app.core.config import settings
+
+set_verbose(settings.chain.verbose)
+set_debug(settings.chain.debug)
 
 
 def _get_embeddings():
@@ -36,7 +41,7 @@ RETRIEVER_PROMPT = ChatPromptTemplate.from_messages(
         MessagesPlaceholder(variable_name="chat_history"),
         ("user", "{input}"),
         (
-            "user",
+            "system",
             "根据上述对话，生成要查找的搜索查询，以获取与对话相关的信息",
         ),
     ]

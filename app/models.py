@@ -12,7 +12,7 @@ class DocumentSet(SQLModel, table=True):
     documents: list["Document"] = Relationship(back_populates="document_set")
 
     def get_save_dir(self):
-        return Path(settings.data_dir) / "docsets" / str(self.id)
+        return settings.data_dir / "docsets" / str(self.id)
 
     def get_documents_dir(self):
         return self.get_save_dir() / "docs"

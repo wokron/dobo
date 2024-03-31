@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 import pytest
 from sqlmodel import Session, delete
 
-from app.core.config import settings
+from app.core.config import DEFAULT_DATABASE_FILE, DEFAULT_MEMORY_FILE, settings
 from app.models import Chat, Document, DocumentSet
 from app.core.db import engine
 from app.main import app
@@ -19,7 +19,7 @@ def session():
 @pytest.fixture(scope="session", autouse=True)
 def wrapper_session():
     yield
-    Path("database.db").unlink(missing_ok=True)
+    Path(DEFAULT_DATABASE_FILE).unlink(missing_ok=True)
     shutil.rmtree(settings.data_dir, ignore_errors=True)
 
 
@@ -30,7 +30,7 @@ def wrapper_module(session: Session):
     session.exec(delete(Document))
     session.exec(delete(Chat))
     session.commit()
-    Path("memory.db").unlink(missing_ok=True)
+    Path(DEFAULT_MEMORY_FILE).unlink(missing_ok=True)
 
 
 @pytest.fixture(scope="module")
