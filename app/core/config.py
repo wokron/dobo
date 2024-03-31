@@ -9,8 +9,13 @@ from pydantic_settings import (
 )
 
 
+class EmbeddingsSettings(BaseSettings):
+    type: str = "DeterministicFakeEmbedding"
+    config: dict[str, Any] = {"size": 256}
+
+
 class LLMSettings(BaseSettings):
-    class_name: str = "FakeListChatModel"
+    type: str = "FakeListChatModel"
     config: dict[str, Any] = {"responses": ["I don't know"]}
 
 
@@ -20,6 +25,7 @@ class Settings(BaseSettings):
     data_dir: str = "./data"
 
     llm: LLMSettings = LLMSettings()
+    embeddings: EmbeddingsSettings = EmbeddingsSettings()
 
     model_config = SettingsConfigDict(env_file=".env", toml_file="config.toml")
 

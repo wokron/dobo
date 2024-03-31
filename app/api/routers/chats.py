@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 
 from app import crud
-from app.api.deps import ChainDep, ChatDep, SessionDep
+from app.api.deps import ChatDep, SessionDep
+from app.core import llm
 from app.models import ChatCreate, ChatOut, MessageIn, MessageOut
 
 
@@ -14,9 +15,9 @@ def create_chat(session: SessionDep, chat_create: ChatCreate):
 
 
 @router.post("/{chat_id}", response_model=MessageOut)
-def post_message(chain: ChainDep, chat: ChatDep, message: MessageIn):
+def post_message(chat: ChatDep, message: MessageIn):
     # invoke the llm chain and return llm's answer
-    result = chain.invoke(
+    result = llm.chain.invoke(
         {"input": message.content},
         config={
             "configurable": {

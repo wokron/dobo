@@ -1,14 +1,14 @@
-from langchain_community.chat_models import FakeListChatModel
 from langchain_core.documents import Document as PagedDocument
+from langchain_community.chat_models import FakeListChatModel
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from sqlmodel import Session
 
 
 from app import crud
-from app.api.deps import get_chain
 from app.models import Document
 from app.core.config import settings
+from app.core import llm
 
 
 def test_create_chain(session: Session, doc: Document):
@@ -28,9 +28,11 @@ def test_create_chain(session: Session, doc: Document):
         paged_docs=paged_docs,
     )
 
-    llm = FakeListChatModel(responses=["Sorry", "Something about apple", "I don't know"])
+    model = FakeListChatModel(
+        responses=["Sorry", "Something about apple", "I don't know"]
+    )
 
-    chain = crud.create_chain(llm)
+    chain = llm._create_chain(model)
 
     result = chain.invoke(
         {"input": "give me apple"},
@@ -58,4 +60,4 @@ def test_create_chain(session: Session, doc: Document):
 
 
 def test_dynamic_import():
-    _ = get_chain()
+    _ = llm._create_chain(llm.model)

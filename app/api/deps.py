@@ -1,13 +1,8 @@
-from functools import lru_cache
-from importlib import import_module
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from sqlmodel import Session
-from langchain_core.runnables import Runnable
 
-from app import crud
-from app.core.config import settings
 from app.core.db import engine
 from app.models import Chat, Document, DocumentSet
 
@@ -54,15 +49,3 @@ def get_chat(session: SessionDep, chat_id: int):
 
 
 ChatDep = Annotated[Chat, Depends(get_chat)]
-
-
-@lru_cache
-def get_chain() -> Runnable:
-    llm_cls = getattr(
-        import_module("langchain_community.chat_models"), settings.llm.class_name
-    )
-    llm = llm_cls(**settings.llm.config)
-    return crud.create_chain(llm)
-
-
-ChainDep = Annotated[Runnable, Depends(get_chain)]
