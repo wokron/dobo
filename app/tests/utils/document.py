@@ -12,5 +12,5 @@ def create_random_document(session: Session):
     session.add(doc)
     session.commit()
     doc.get_save_path().write_bytes(data)
-    crud.load_document_to_vector_store(session=session, doc=doc)
+    crud._save_to_vectorstore(session=session, doc=doc)
     return doc

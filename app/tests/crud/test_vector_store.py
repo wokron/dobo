@@ -4,8 +4,8 @@ from langchain_community.vectorstores import Chroma
 
 from app.core import llm
 from app.crud import (
-    add_paged_documents,
-    remove_document_from_vector_store,
+    _save_pages_to_vectorstore,
+    _remove_from_vectorstore,
 )
 from app.models import Document
 
@@ -14,7 +14,7 @@ def test_create_pages_and_vectors(session: Session, doc: Document):
     paged_docs = [
         PagedDocument(page_content=content) for content in ["page1", "page2", "page3"]
     ]
-    add_paged_documents(
+    _save_pages_to_vectorstore(
         session=session,
         doc=doc,
         paged_docs=paged_docs,
@@ -36,7 +36,7 @@ def test_delete_vectors(session: Session, docset):
         PagedDocument(page_content=content) for content in ["page1", "page2", "page3"]
     ]
 
-    add_paged_documents(
+    _save_pages_to_vectorstore(
         session=session,
         doc=doc2,
         paged_docs=paged_docs2,
@@ -48,6 +48,6 @@ def test_delete_vectors(session: Session, docset):
     )
     assert vector_store._collection.count() == 6
 
-    remove_document_from_vector_store(doc=doc2)
+    _remove_from_vectorstore(doc=doc2)
 
     assert vector_store._collection.count() == 3

@@ -43,7 +43,7 @@ def test_get_chat_history():
 
 
 def test_delete_chat_history():
-    crud.delete_chat_history(chat_id=1)
+    crud._delete_chat_history(chat_id=1)
     memory: BaseChatMessageHistory = SQLChatMessageHistory(
         session_id=1,
         connection_string=settings.memory_url,

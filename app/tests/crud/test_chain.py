@@ -22,7 +22,7 @@ def test_create_chain(session: Session, doc: Document):
     paged_docs = [
         PagedDocument(page_content=content) for content in ["apple", "banana", "water"]
     ]
-    crud.add_paged_documents(
+    crud._save_pages_to_vectorstore(
         session=session,
         doc=doc,
         paged_docs=paged_docs,

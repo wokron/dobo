@@ -51,14 +51,14 @@ def create_document(session: Session, file: UploadFile, docset_id: int):
     # save document to fs
     db_doc.get_save_path().write_bytes(file.file.read())
     # split document into pages, create pages and vectorize them
-    load_document_to_vector_store(session, db_doc)
+    _save_to_vectorstore(session, db_doc)
 
     return db_doc
 
 
 def delete_document(session: Session, doc: Document):
     # remove pages from vector store
-    remove_document_from_vector_store(doc=doc)
+    _remove_from_vectorstore(doc=doc)
 
     session.delete(doc)
     session.commit()
@@ -92,17 +92,29 @@ def delete_chat(session: Session, chat: Chat):
     session.delete(chat)
     session.commit()
     # delete chat history
-    delete_chat_history(chat_id=chat.id)
+    _delete_chat_history(chat_id=chat.id)
 
 
-def load_document_to_vector_store(session: Session, doc: Document):
+def list_chat_history(chat_id: int):
+    history = SQLChatMessageHistory(
+        session_id=chat_id,
+        connection_string=settings.memory_url,
+    )
+    messages: list[BaseMessage] = history.messages
+    messages_out: list[MessageOut] = []
+    for message in messages:
+        messages_out.append(MessageOut(role=message.type, content=message.content))
+
+    return messages_out
+
+
+def _save_to_vectorstore(session: Session, doc: Document):
     paged_docs: list[PagedDocument] = PyMuPDFLoader(str(doc.get_save_path())).load()
 
-    add_paged_documents(session=session, doc=doc, paged_docs=paged_docs)
+    _save_pages_to_vectorstore(session=session, doc=doc, paged_docs=paged_docs)
 
 
-def add_paged_documents(
-    *,
+def _save_pages_to_vectorstore(
     session: Session,
     doc: Document,
     paged_docs: list[PagedDocument],
@@ -121,7 +133,7 @@ def add_paged_documents(
     )
 
 
-def remove_document_from_vector_store(*, doc: Document):
+def _remove_from_vectorstore(doc: Document):
     vector_store_path: Path = doc.document_set.get_vector_store_path()
     ids = [f"doc{doc.id}_page{no}" for no in range(doc.page_num)]
 
@@ -132,22 +144,9 @@ def remove_document_from_vector_store(*, doc: Document):
     vector_store._collection.delete(ids=ids)
 
 
-def delete_chat_history(*, chat_id: int):
+def _delete_chat_history(chat_id: int):
     history = SQLChatMessageHistory(
         session_id=chat_id,
         connection_string=settings.memory_url,
     )
     history.clear()
-
-
-def list_chat_history(*, chat_id: int):
-    history = SQLChatMessageHistory(
-        session_id=chat_id,
-        connection_string=settings.memory_url,
-    )
-    messages: list[BaseMessage] = history.messages
-    messages_out: list[MessageOut] = []
-    for message in messages:
-        messages_out.append(MessageOut(role=message.type, content=message.content))
-
-    return messages_out
