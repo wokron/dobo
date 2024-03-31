@@ -20,36 +20,12 @@ def session():
 def wrapper_session():
     yield
     Path(DEFAULT_DATABASE_FILE).unlink(missing_ok=True)
-    shutil.rmtree(settings.data_dir, ignore_errors=True)
-
-
-@pytest.fixture(scope="module", autouse=True)
-def wrapper_module(session: Session):
-    yield
-    session.exec(delete(DocumentSet))
-    session.exec(delete(Document))
-    session.exec(delete(Chat))
-    session.commit()
     Path(DEFAULT_MEMORY_FILE).unlink(missing_ok=True)
+    shutil.rmtree(settings.data_dir, ignore_errors=True)
+    session.commit()
 
 
 @pytest.fixture(scope="module")
 def client():
     with TestClient(app) as c:
         yield c
-
-
-@pytest.fixture(scope="module", autouse=True)
-def docset(session: Session):
-    db_docset = DocumentSet(name="docset")
-    session.add(db_docset)
-    session.commit()
-    return db_docset
-
-
-@pytest.fixture(scope="module", autouse=True)
-def doc(session: Session, docset: DocumentSet):
-    db_doc = Document(name="doc", document_set=docset)
-    session.add(db_doc)
-    session.commit()
-    return db_doc

@@ -8,9 +8,13 @@ from app.crud import (
     _remove_from_vectorstore,
 )
 from app.models import Document
+from app.tests.utils.document import create_random_document
+from app.tests.utils.document_set import create_random_document_set
+from app.tests.utils.utils import get_random_lower_string
 
 
-def test_create_pages_and_vectors(session: Session, doc: Document):
+def test_create_pages_and_vectors(session: Session):
+    doc = create_random_document(session)
     paged_docs = [
         PagedDocument(page_content=content) for content in ["page1", "page2", "page3"]
     ]
@@ -27,27 +31,46 @@ def test_create_pages_and_vectors(session: Session, doc: Document):
     assert vectorstore._collection.count() == 3
 
 
-def test_delete_vectors(session: Session, docset):
-    doc2 = Document(name="doc2", document_set=docset)
-    session.add(doc2)
+def test_delete_vectors(session: Session):
+    docset = create_random_document_set(session)
+
+    docs = [
+        Document(name=get_random_lower_string(), document_set=docset) for _ in range(2)
+    ]
+    session.add_all(docs)
     session.commit()
 
-    paged_docs2 = [
+    doc1, doc2 = docs
+
+    paged_docs = [
         PagedDocument(page_content=content) for content in ["page1", "page2", "page3"]
     ]
+
+    vectorstore = Chroma(
+        persist_directory=str(docset.get_vectorstore_dir()),
+        embedding_function=llm.embeddings,
+    )
+
+    _save_pages_to_vectorstore(
+        session=session,
+        doc=doc1,
+        paged_docs=paged_docs,
+    )
+
+    assert vectorstore._collection.count() == 3
 
     _save_pages_to_vectorstore(
         session=session,
         doc=doc2,
-        paged_docs=paged_docs2,
+        paged_docs=paged_docs,
     )
 
-    vectorstore = Chroma(
-        persist_directory=str(doc2.document_set.get_vectorstore_dir()),
-        embedding_function=llm.embeddings,
-    )
     assert vectorstore._collection.count() == 6
 
     _remove_from_vectorstore(doc=doc2)
 
     assert vectorstore._collection.count() == 3
+
+    _remove_from_vectorstore(doc=doc1)
+
+    assert vectorstore._collection.count() == 0

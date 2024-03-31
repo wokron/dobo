@@ -9,9 +9,16 @@ from app import crud
 from app.models import Document
 from app.core.config import settings
 from app.core import llm
+from app.tests.utils.document_set import create_random_document_set
+from app.tests.utils.utils import get_random_lower_string
 
 
-def test_create_chain(session: Session, doc: Document):
+def test_create_chain(session: Session):
+    docset = create_random_document_set(session)
+    doc = Document(name=get_random_lower_string(), document_set=docset)
+    session.add(doc)
+    session.commit()
+
     memory: BaseChatMessageHistory = SQLChatMessageHistory(
         session_id=3,
         connection_string=settings.memory_url,
