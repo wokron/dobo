@@ -31,7 +31,7 @@ def create_document_set(session: Session, docset_create: DocumentSetCreate):
 
     db_docset.get_save_path().mkdir(parents=True, exist_ok=True)
     db_docset.get_documents_path().mkdir(exist_ok=True)
-    db_docset.get_vector_store_path().mkdir(exist_ok=True)
+    db_docset.get_vectorstore_path().mkdir(exist_ok=True)
     return db_docset
 
 
@@ -81,7 +81,7 @@ def post_message_in_chat(chat: Chat, message: MessageIn):
         config={
             "configurable": {
                 "session_id": chat.id,
-                "vectorstore": str(chat.document_set.get_vector_store_path()),
+                "vectorstore": str(chat.document_set.get_vectorstore_path()),
             }
         },
     )
@@ -124,24 +124,24 @@ def _save_pages_to_vectorstore(
     session.commit()
 
     ids = [f"doc{doc.id}_page{no}" for no in range(doc.page_num)]
-    vector_store_path: Path = doc.document_set.get_vector_store_path()
+    vectorstore_path: Path = doc.document_set.get_vectorstore_path()
     Chroma.from_documents(
         paged_docs,
         llm.embeddings,
         ids=ids,
-        persist_directory=str(vector_store_path),
+        persist_directory=str(vectorstore_path),
     )
 
 
 def _remove_from_vectorstore(doc: Document):
-    vector_store_path: Path = doc.document_set.get_vector_store_path()
+    vectorstore_path: Path = doc.document_set.get_vectorstore_path()
     ids = [f"doc{doc.id}_page{no}" for no in range(doc.page_num)]
 
-    vector_store = Chroma(
-        persist_directory=str(vector_store_path),
+    vectorstore = Chroma(
+        persist_directory=str(vectorstore_path),
         embedding_function=llm.embeddings,
     )
-    vector_store._collection.delete(ids=ids)
+    vectorstore._collection.delete(ids=ids)
 
 
 def _delete_chat_history(chat_id: int):

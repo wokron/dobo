@@ -20,11 +20,11 @@ def test_create_pages_and_vectors(session: Session, doc: Document):
         paged_docs=paged_docs,
     )
 
-    vector_store = Chroma(
-        persist_directory=str(doc.document_set.get_vector_store_path()),
+    vectorstore = Chroma(
+        persist_directory=str(doc.document_set.get_vectorstore_path()),
         embedding_function=llm.embeddings,
     )
-    assert vector_store._collection.count() == 3
+    assert vectorstore._collection.count() == 3
 
 
 def test_delete_vectors(session: Session, docset):
@@ -42,12 +42,12 @@ def test_delete_vectors(session: Session, docset):
         paged_docs=paged_docs2,
     )
 
-    vector_store = Chroma(
-        persist_directory=str(doc2.document_set.get_vector_store_path()),
+    vectorstore = Chroma(
+        persist_directory=str(doc2.document_set.get_vectorstore_path()),
         embedding_function=llm.embeddings,
     )
-    assert vector_store._collection.count() == 6
+    assert vectorstore._collection.count() == 6
 
     _remove_from_vectorstore(doc=doc2)
 
-    assert vector_store._collection.count() == 3
+    assert vectorstore._collection.count() == 3

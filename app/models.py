@@ -17,7 +17,7 @@ class DocumentSet(SQLModel, table=True):
     def get_documents_path(self):
         return self.get_save_path() / "docs"
 
-    def get_vector_store_path(self):
+    def get_vectorstore_path(self):
         return self.get_save_path() / "chroma"
 
 
