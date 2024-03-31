@@ -10,8 +10,8 @@ from pydantic_settings import (
 
 
 class LLMSettings(BaseSettings):
-    class_name: str = "HumanInputChatModel"
-    config: dict[str, Any] = {}
+    class_name: str = "FakeListChatModel"
+    config: dict[str, Any] = {"responses": ["I don't know"]}
 
 
 class Settings(BaseSettings):

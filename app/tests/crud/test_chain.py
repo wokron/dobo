@@ -1,4 +1,4 @@
-from langchain.llms.fake import FakeListLLM
+from langchain_community.chat_models import FakeListChatModel
 from langchain_core.documents import Document as PagedDocument
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
@@ -28,7 +28,7 @@ def test_create_chain(session: Session, doc: Document):
         paged_docs=paged_docs,
     )
 
-    llm = FakeListLLM(responses=["Sorry", "Something about apple", "I don't know"])
+    llm = FakeListChatModel(responses=["Sorry", "Something about apple", "I don't know"])
 
     chain = crud.create_chain(llm)
 
