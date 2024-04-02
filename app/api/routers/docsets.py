@@ -31,7 +31,7 @@ def list_document_sets(session: SessionDep):
     return session.exec(select(DocumentSet)).all()
 
 
-@router.post("/{docset_id}/docs", response_model=list[DocumentOut])
+@router.post("/{docset_id}/docs", response_model=list[DocumentOut], tags=["docs"])
 def upload_documents(
     session: SessionDep,
     docset: DocumentSetDep,
@@ -44,6 +44,6 @@ def upload_documents(
     return new_docs
 
 
-@router.get("/{docset_id}/docs", response_model=list[DocumentOut])
+@router.get("/{docset_id}/docs", response_model=list[DocumentOut], tags=["docs"])
 def list_documents(docset: DocumentSetDep):
     return docset.documents
