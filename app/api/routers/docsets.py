@@ -39,7 +39,7 @@ def upload_documents(
 ):
     new_docs: list[Document] = []
     for file in files:
-        new_docs.append(crud.create_document(session, file, docset.id))
+        new_docs.append(crud.create_document_from_upload(session, file, docset.id))
 
     return new_docs
 

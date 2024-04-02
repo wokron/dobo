@@ -43,13 +43,18 @@ def delete_document_set(session: Session, docset: DocumentSet):
     shutil.rmtree(docset.get_save_dir())
 
 
-def create_document(session: Session, file: UploadFile, docset_id: int):
-    db_doc = Document(name=file.filename, document_set_id=docset_id)
+def create_document_from_upload(session: Session, file: UploadFile, docset_id: int):
+    return create_document(session, file.filename, file.file.read(), docset_id)
+
+
+def create_document(session: Session, file: tuple[str, bytes], docset_id: int):
+    filename, filedata = file
+    db_doc = Document(name=filename, document_set_id=docset_id)
     session.add(db_doc)
     session.commit()
 
     # save document to fs
-    db_doc.get_save_path().write_bytes(file.file.read())
+    db_doc.get_save_path().write_bytes(filedata)
     # split document into pages, create pages and vectorize them
     _save_to_vectorstore(session, db_doc)
 
