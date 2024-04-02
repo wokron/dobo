@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Any, Tuple, Type
 
@@ -9,7 +10,12 @@ from pydantic_settings import (
     TomlConfigSettingsSource,
 )
 
-dotenv.load_dotenv(".env")
+ENV_PATH = os.environ.get("DOBO_ENV_PATH", ".env")
+
+dotenv.load_dotenv(ENV_PATH)
+
+CONFIG_PATH: str = os.environ.get("DOBO_CONFIG_PATH", "config.toml")
+
 
 DEFAULT_DATABASE_FILE = "database.db"
 DEFAULT_MEMORY_FILE = "memory.db"
@@ -31,7 +37,7 @@ class ChainSettings(BaseSettings):
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(toml_file="config.toml")
+    model_config = SettingsConfigDict(toml_file=CONFIG_PATH)
 
     database_url: str = f"sqlite:///{DEFAULT_DATABASE_FILE}"
     memory_url: str = f"sqlite:///{DEFAULT_MEMORY_FILE}"
