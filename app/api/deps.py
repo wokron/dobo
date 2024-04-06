@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, status
 from sqlmodel import Session
 
 from app.core.db import engine
-from app.models import Chat, Document, DocumentSet
+from app.models import Chat, Document, DocumentSet, Keyword
 
 
 def get_db():
@@ -49,3 +49,15 @@ def get_chat(session: SessionDep, chat_id: int):
 
 
 ChatDep = Annotated[Chat, Depends(get_chat)]
+
+
+def get_keyword(session: SessionDep, keyword_id: int):
+    db_keyword = session.get(Keyword, keyword_id)
+    if db_keyword == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Keyword not found"
+        )
+    return db_keyword
+
+
+KeywordDep = Annotated[Keyword, Depends(get_keyword)]
