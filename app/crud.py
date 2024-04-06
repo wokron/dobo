@@ -81,6 +81,9 @@ def create_chat(session: Session, chat_create: ChatCreate):
     session.refresh(db_chat)
     return db_chat
 
+def list_chats(session: Session):
+    return session.exec(select(Chat)).all()
+
 
 def post_message_in_chat(session: Session, chat: Chat, message: MessageIn):
     content = message.content
