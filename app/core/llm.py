@@ -56,6 +56,7 @@ ANSWER_PROMPT = ChatPromptTemplate.from_messages(
         ),
         MessagesPlaceholder(variable_name="chat_history"),
         ("user", "{input}"),
+        ("system", "{keywords}"),
     ]
 )
 

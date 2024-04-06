@@ -15,8 +15,8 @@ def create_chat(session: SessionDep, chat_create: ChatCreate):
 
 
 @router.post("/{chat_id}", response_model=MessageOut)
-def post_message(chat: ChatDep, message: MessageIn):
-    return crud.post_message_in_chat(chat, message)
+def post_message(session: SessionDep, chat: ChatDep, message: MessageIn):
+    return crud.post_message_in_chat(session, chat, message)
 
 
 @router.get("/{chat_id}", response_model=list[MessageOut])

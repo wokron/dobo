@@ -2,7 +2,7 @@ from pathlib import Path
 import shutil
 
 from fastapi import UploadFile
-from sqlmodel import Session, delete, select
+from sqlmodel import Session, col, delete, select
 from langchain_core.documents import Document as PagedDocument
 from langchain_core.messages import BaseMessage
 from langchain_community.document_loaders import PyMuPDFLoader
@@ -46,7 +46,8 @@ def delete_document_set(session: Session, docset: DocumentSet):
 
 
 def create_document_from_upload(session: Session, file: UploadFile, docset_id: int):
-    return create_document(session, file.filename, file.file.read(), docset_id)
+    file = (file.filename, file.file.read())
+    return create_document(session, file, docset_id)
 
 
 def create_document(session: Session, file: tuple[str, bytes], docset_id: int):
@@ -81,10 +82,16 @@ def create_chat(session: Session, chat_create: ChatCreate):
     return db_chat
 
 
-def post_message_in_chat(chat: Chat, message: MessageIn):
+def post_message_in_chat(session: Session, chat: Chat, message: MessageIn):
+    content = message.content
+
+    keywords_prompt = _convert_keywords_to_prompt(
+        _get_keywords_in_content(session, content)
+    )
+
     # invoke the llm chain and return llm's answer
     result = llm.chain.invoke(
-        {"input": message.content},
+        {"input": message.content, "keywords": keywords_prompt},
         config={
             "configurable": {
                 "session_id": chat.id,
@@ -93,6 +100,12 @@ def post_message_in_chat(chat: Chat, message: MessageIn):
         },
     )
     return MessageOut(role="ai", content=result["answer"])
+
+
+def _convert_keywords_to_prompt(keywords: list[Keyword]):
+    return "\n\n".join(
+        [f"**{keyword.keyword}**: {keyword.prompt}" for keyword in keywords]
+    )
 
 
 def delete_chat(session: Session, chat: Chat):
@@ -121,7 +134,7 @@ def create_keyword(session: Session, keyword_create: KeywordCreate):
     session.commit()
     session.refresh(db_keyword)
 
-    ac.automaton.add_word(db_keyword.keyword, (db_keyword.id, db_keyword.keyword))
+    ac.automaton.add_word(db_keyword.keyword, db_keyword.id)
     ac.automaton.make_automaton()
 
     return db_keyword
@@ -137,6 +150,19 @@ def delete_keyword(session: Session, keyword: Keyword):
 
 def list_keywords(session: Session):
     return session.exec(select(Keyword)).all()
+
+
+def _get_keywords_in_content(session: Session, content: str):
+    if len(ac.automaton) == 0:
+        return []
+    keyword_ids: set[int] = set()
+    for _, keyword_id in ac.automaton.iter(content):
+        keyword_ids.add(keyword_id)
+
+    keywords: list[Keyword] = session.exec(
+        select(Keyword).where(col(Keyword.id).in_(keyword_ids))
+    ).all()
+    return keywords
 
 
 def _save_to_vectorstore(session: Session, doc: Document):
