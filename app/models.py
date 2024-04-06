@@ -75,3 +75,20 @@ class MessageIn(SQLModel):
 class MessageOut(SQLModel):
     role: str
     content: str
+
+
+class Keyword(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    keyword: str = Field(min_length=2, max_length=64, unique=True)
+    prompt: str
+
+
+class KeywordCreate(SQLModel):
+    keyword: str = Field(min_length=2, max_length=64)
+    prompt: str
+
+
+class KeywordOut(SQLModel):
+    id: int
+    keyword: str
+    prompt: str

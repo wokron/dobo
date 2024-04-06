@@ -17,10 +17,12 @@ from app.models import (
     Document,
     DocumentSet,
     DocumentSetCreate,
+    Keyword,
+    KeywordCreate,
     MessageIn,
     MessageOut,
 )
-from app.core import llm
+from app.core import llm, ac
 
 
 def create_document_set(session: Session, docset_create: DocumentSetCreate):
@@ -111,6 +113,26 @@ def list_chat_history(chat_id: int):
         messages_out.append(MessageOut(role=message.type, content=message.content))
 
     return messages_out
+
+
+def create_keyword(session: Session, keyword_create: KeywordCreate):
+    db_keyword = Keyword.model_validate(keyword_create)
+    session.add(db_keyword)
+    session.commit()
+    session.refresh(db_keyword)
+
+    ac.automaton.add_word(db_keyword.keyword, (db_keyword.id, db_keyword.keyword))
+    ac.automaton.make_automaton()
+
+    return db_keyword
+
+
+def delete_keyword(session: Session, keyword: Keyword):
+    ac.automaton.remove_word(keyword.keyword)
+    ac.automaton.make_automaton()
+
+    session.delete(keyword)
+    session.commit()
 
 
 def _save_to_vectorstore(session: Session, doc: Document):
