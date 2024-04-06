@@ -73,6 +73,7 @@ pluggy==1.4.0
 posthog==3.5.0
 protobuf==4.25.3
 pulsar-client==3.4.0
+pyahocorasick==2.1.0
 pyasn1==0.6.0
 pyasn1_modules==0.4.0
 pydantic==2.6.4
