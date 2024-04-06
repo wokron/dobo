@@ -17,7 +17,7 @@ def create_keyword(session: SessionDep, keyword_create: KeywordCreate):
 
 @router.get("/", response_model=list[KeywordOut])
 def list_keywords(session: SessionDep):
-    return session.exec(select(Keyword)).all()
+    return crud.list_keywords(session)
 
 
 @router.delete("/{keyword_id}")

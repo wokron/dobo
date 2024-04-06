@@ -2,7 +2,7 @@ from pathlib import Path
 import shutil
 
 from fastapi import UploadFile
-from sqlmodel import Session, delete
+from sqlmodel import Session, delete, select
 from langchain_core.documents import Document as PagedDocument
 from langchain_core.messages import BaseMessage
 from langchain_community.document_loaders import PyMuPDFLoader
@@ -133,6 +133,10 @@ def delete_keyword(session: Session, keyword: Keyword):
 
     session.delete(keyword)
     session.commit()
+
+
+def list_keywords(session: Session):
+    return session.exec(select(Keyword)).all()
 
 
 def _save_to_vectorstore(session: Session, doc: Document):
