@@ -1,16 +1,15 @@
 from fastapi import APIRouter
 
 from app import crud
-from app.api.deps import ChatDep, SessionDep
-from app.core import llm
-from app.models import ChatCreate, ChatOut, MessageIn, MessageOut
+from app.api.deps import ChatCreateDep, ChatDep, SessionDep
+from app.models import ChatOut, MessageIn, MessageOut
 
 
 router = APIRouter()
 
 
 @router.post("/", response_model=ChatOut)
-def create_chat(session: SessionDep, chat_create: ChatCreate):
+def create_chat(session: SessionDep, chat_create: ChatCreateDep):
     return crud.create_chat(session=session, chat_create=chat_create)
 
 

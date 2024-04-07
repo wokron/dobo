@@ -2,12 +2,11 @@ from fastapi import APIRouter, UploadFile
 from sqlmodel import select
 
 from app import crud
-from app.api.deps import DocumentSetDep, SessionDep
+from app.api.deps import DocumentSetCreateDep, DocumentSetDep, SessionDep
 from app.models import (
     Document,
     DocumentOut,
     DocumentSet,
-    DocumentSetCreate,
     DocumentSetOut,
 )
 
@@ -16,7 +15,7 @@ router = APIRouter()
 
 
 @router.post("/", response_model=DocumentSetOut)
-def create_document_set(session: SessionDep, docset_create: DocumentSetCreate):
+def create_document_set(session: SessionDep, docset_create: DocumentSetCreateDep):
     db_docset = crud.create_document_set(session=session, docset_create=docset_create)
     return db_docset
 
