@@ -1,4 +1,5 @@
 from importlib import import_module
+from operator import itemgetter
 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
@@ -62,20 +63,32 @@ ANSWER_PROMPT = ChatPromptTemplate.from_messages(
 
 
 def _create_chain(model):
-    def select_retriever(text: str, config: RunnableConfig):
+    def _select_retriever(text: str, config: RunnableConfig):
         vectorstore = Chroma(
             persist_directory=config["configurable"]["vectorstore"],
             embedding_function=embeddings,
         )
         return vectorstore.as_retriever()
 
-    retriever = RunnableLambda(select_retriever)
+    retriever = RunnableLambda(_select_retriever)
     retriever_chain = create_history_aware_retriever(model, retriever, RETRIEVER_PROMPT)
     document_chain = create_stuff_documents_chain(model, ANSWER_PROMPT)
     retrieval_chain = create_retrieval_chain(retriever_chain, document_chain)
 
-    retrieval_chain_with_chat_history = RunnableWithMessageHistory(
-        retrieval_chain,
+    def _format_keywords(data):
+        keywords: dict[str, str] = data["keywords"]
+        return "\n\n".join(
+            [f"**{keyword}**: {prompt}" for keyword, prompt in keywords.items()]
+        )
+
+    chat_chain = {
+        "keywords": RunnableLambda(_format_keywords),
+        "input": itemgetter("input"),
+        "chat_history": itemgetter("chat_history"),
+    } | retrieval_chain
+
+    chain_with_chat_history = RunnableWithMessageHistory(
+        chat_chain,
         lambda session_id: SQLChatMessageHistory(
             session_id=session_id, connection_string=settings.memory_url
         ),
@@ -84,7 +97,7 @@ def _create_chain(model):
         output_messages_key="answer",
     )
 
-    return retrieval_chain_with_chat_history
+    return chain_with_chat_history
 
 
 chain = _create_chain(model)
