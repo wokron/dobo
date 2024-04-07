@@ -12,9 +12,11 @@ from langchain_core.runnables import Runnable
 
 from app.core.config import settings
 from app.models import (
+    ChatResponse,
     Chat,
     ChatCreate,
     Document,
+    DocumentOut,
     DocumentSet,
     DocumentSetCreate,
     Keyword,
@@ -79,7 +81,11 @@ def _save_pages_to_vectorstore(
     session.add(doc)
     session.commit()
 
-    ids = [f"doc{doc.id}_page{no}" for no in range(doc.page_num)]
+    ids: list[str] = []
+    for no, paged_doc in enumerate(paged_docs):
+        ids.append(f"doc{doc.id}_page{no}")
+        paged_doc.metadata["doc_id"] = doc.id
+
     vectorstore_path: Path = doc.document_set.get_vectorstore_dir()
     Chroma.from_documents(
         paged_docs,
@@ -139,7 +145,19 @@ def post_message_in_chat(session: Session, chat: Chat, message: MessageIn):
             }
         },
     )
-    return MessageOut(role="ai", content=result["answer"])
+
+    doc_ids = {doc.metadata["doc_id"] for doc in result["context"]}
+    documents = [
+        DocumentOut.model_validate(doc)
+        for doc in session.exec(
+            select(Document).where(col(Document.id).in_(doc_ids))
+        ).all()
+    ]
+
+    return ChatResponse(
+        message=MessageOut(role="ai", content=result["answer"]),
+        documents=documents,
+    )
 
 
 def _get_keywords_in_content(session: Session, content: str):

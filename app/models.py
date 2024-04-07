@@ -77,6 +77,11 @@ class MessageOut(SQLModel):
     content: str
 
 
+class ChatResponse(SQLModel):
+    message: MessageOut
+    documents: list[DocumentOut]
+
+
 class Keyword(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     keyword: str = Field(min_length=2, max_length=64, unique=True)

@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from app import crud
 from app.api.deps import ChatCreateDep, ChatDep, SessionDep
-from app.models import ChatOut, MessageIn, MessageOut
+from app.models import ChatOut, ChatResponse, MessageIn, MessageOut
 
 
 router = APIRouter()
@@ -18,7 +18,7 @@ def list_chats(session: SessionDep):
     return crud.list_chats(session)
 
 
-@router.post("/{chat_id}", response_model=MessageOut)
+@router.post("/{chat_id}", response_model=ChatResponse)
 def post_message(session: SessionDep, chat: ChatDep, message: MessageIn):
     return crud.post_message_in_chat(session, chat, message)
 
