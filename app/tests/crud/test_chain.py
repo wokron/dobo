@@ -42,7 +42,7 @@ def test_create_chain(session: Session):
     chain = llm._create_chain(model)
 
     result = chain.invoke(
-        {"input": "give me apple"},
+        {"input": "give me apple", "keywords": {}},
         config={
             "configurable": {
                 "session_id": 3,
@@ -54,7 +54,7 @@ def test_create_chain(session: Session):
     assert result["answer"] == "Sorry"
 
     result = chain.invoke(
-        {"input": "give me apple"},
+        {"input": "give me apple", "keywords": {}},
         config={
             "configurable": {
                 "session_id": 3,

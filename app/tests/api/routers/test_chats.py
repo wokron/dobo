@@ -27,7 +27,7 @@ def test_post_message(client: TestClient, session: Session):
     response = client.post(f"/chats/{chat.id}", json={"content": "Hello"})
     assert response.status_code == 200
 
-    data = {"role": "ai", "content": "I don't know"}
+    data = {"message": {"role": "ai", "content": "I don't know"}, "documents": []}
     content = response.json()
     assert content == data
 
@@ -40,7 +40,7 @@ def test_get_chat_history(client: TestClient, session: Session):
     response = client.post(f"/chats/{chat.id}", json={"content": "Hello2"})
     assert response.status_code == 200
 
-    response = client.get(f"/chats/{chat.id}")
+    response = client.get(f"/chats/{chat.id}/history")
     assert response.status_code == 200
 
     data = [

@@ -34,8 +34,8 @@ def test_add_chat_history(session: Session):
 def test_add_and_get_chat_history(session: Session):
     chat = create_random_chat(session)
 
-    crud.post_message_in_chat(chat, MessageIn(content="Hello1"))
-    crud.post_message_in_chat(chat, MessageIn(content="Hello2"))
+    crud.post_message_in_chat(session, chat, MessageIn(content="Hello1"))
+    crud.post_message_in_chat(session, chat, MessageIn(content="Hello2"))
 
     messages = crud.list_chat_history(chat_id=chat.id)
     assert len(messages) == 4
@@ -50,7 +50,7 @@ def test_add_and_get_chat_history(session: Session):
 def test_delete_chat_history(session: Session):
     chat = create_random_chat(session)
 
-    crud.post_message_in_chat(chat, MessageIn(content="Hello1"))
+    crud.post_message_in_chat(session, chat, MessageIn(content="Hello1"))
 
     memory: BaseChatMessageHistory = SQLChatMessageHistory(
         session_id=chat.id,
