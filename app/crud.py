@@ -146,13 +146,14 @@ def post_message_in_chat(session: Session, chat: Chat, message: MessageIn):
         },
     )
 
-    doc_ids = {doc.metadata["doc_id"] for doc in result["context"]}
-    documents = [
-        DocumentOut.model_validate(doc)
-        for doc in session.exec(
-            select(Document).where(col(Document.id).in_(doc_ids))
-        ).all()
-    ]
+    documents: list[DocumentOut] = []
+    for doc in result["context"]:
+        doc_id = doc.metadata["doc_id"]
+        doc_page_no = doc.metadata["page"]
+        db_doc = session.get(Document, doc_id)
+        documents.append(
+            DocumentOut.model_validate(db_doc, update={"page_no": doc_page_no})
+        )
 
     return ChatResponse(
         message=MessageOut(role="ai", content=result["answer"]),

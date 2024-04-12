@@ -47,6 +47,7 @@ class DocumentOut(SQLModel):
     id: int
     name: str
     document_set_id: int
+    page_no: int
 
 
 class Chat(SQLModel, table=True):
