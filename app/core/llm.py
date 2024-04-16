@@ -3,6 +3,7 @@ import json
 from operator import itemgetter
 from typing import Any
 
+import httpx
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables import RunnableLambda, RunnableConfig
@@ -16,6 +17,9 @@ from langchain_community.chat_message_histories.sql import (
     message_to_dict,
 )
 from langchain.globals import set_debug, set_verbose
+from langchain_core.language_models import BaseChatModel
+from langchain_core.outputs import ChatGeneration, ChatResult
+from langchain_core.messages import AIMessage, BaseMessage, ChatMessage, HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableBranch, RunnableParallel, RunnablePick
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import AIMessage, BaseMessage
@@ -42,10 +46,64 @@ def _get_embeddings():
 embeddings = _get_embeddings()
 
 
+class CustomChatModel(BaseChatModel):
+    request_url: str
+
+    def _generate(
+        self,
+        messages: list[BaseMessage],
+        **kwargs: Any,
+    ) -> ChatResult:
+
+        # Replace this with actual logic to generate a response from a list
+        # of messages.
+        messages_texts: list[str] = []
+
+        for message in messages:
+            messages_texts.append(_convert_message_to_text(message))
+
+        messages_text = "\n".join(messages_texts)
+
+        response = httpx.post(self.request_url, json={"content": messages_text})
+        if response.status_code != 200:
+            raise Exception("Fail to request llm api")
+
+        content = response.json()
+
+        response_message = AIMessage(content=content["result"])
+
+        generation = ChatGeneration(message=response_message)
+        return ChatResult(generations=[generation])
+
+    @property
+    def _llm_type(self) -> str:
+        return "custom-chat-model"
+
+    @property
+    def _identifying_params(self) -> dict[str, Any]:
+        return {"model_name": "custom-chat-model"}
+
+
+def _convert_message_to_text(message: BaseMessage):
+    if isinstance(message, ChatMessage):
+        return f"{message.role}: {message.content}"
+    elif isinstance(message, HumanMessage):
+        return f"user: {message.content}"
+    elif isinstance(message, AIMessage):
+        return f"assistant: {message.content}"
+    elif isinstance(message, SystemMessage):
+        return f"system: {message.content}"
+    else:
+        raise TypeError(f"Got unknown type {message}")
+
+
 def _get_model():
-    model_cls = getattr(
-        import_module("langchain_community.chat_models"), settings.llm.type
-    )
+    if settings.llm.type == "CustomChatModel":
+        model_cls = CustomChatModel
+    else:
+        model_cls = getattr(
+            import_module("langchain_community.chat_models"), settings.llm.type
+        )
     model = model_cls(**settings.llm.config)
     return model
 
