@@ -17,6 +17,7 @@ from app.models import (
     ChatCreate,
     Document,
     DocumentOut,
+    DocumentOutWithPage,
     DocumentSet,
     DocumentSetCreate,
     Keyword,
@@ -146,18 +147,19 @@ def post_message_in_chat(session: Session, chat: Chat, message: MessageIn):
         },
     )
 
-    documents: list[DocumentOut] = []
+    documents: dict[int, DocumentOutWithPage] = {}
     for doc in result["context"]:
         doc_id = doc.metadata["doc_id"]
         doc_page_no = doc.metadata["page"]
-        db_doc = session.get(Document, doc_id)
-        documents.append(
-            DocumentOut.model_validate(db_doc, update={"page_no": doc_page_no})
-        )
+        if doc_id in documents:
+            documents[doc_id].pages.append(doc_page_no)
+        else:
+            db_doc = session.get(Document, doc_id)
+            documents[doc_id] = DocumentOutWithPage.model_validate(db_doc, update={"pages": [doc_page_no]})
 
     return ChatResponse(
         message=MessageOut(role="ai", content=result["answer"]),
-        documents=documents,
+        documents=list(documents.values()),
     )
 
 

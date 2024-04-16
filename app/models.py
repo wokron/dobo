@@ -47,7 +47,6 @@ class DocumentOut(SQLModel):
     id: int
     name: str
     document_set_id: int
-    page_no: int
 
 
 class Chat(SQLModel, table=True):
@@ -78,9 +77,13 @@ class MessageOut(SQLModel):
     content: str
 
 
+class DocumentOutWithPage(DocumentOut):
+    pages: list[int]
+
+
 class ChatResponse(SQLModel):
     message: MessageOut
-    documents: list[DocumentOut]
+    documents: list[DocumentOutWithPage]
 
 
 class Keyword(SQLModel, table=True):
