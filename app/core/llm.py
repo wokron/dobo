@@ -68,7 +68,10 @@ def _create_chain(model):
             persist_directory=config["configurable"]["vectorstore"],
             embedding_function=embeddings,
         )
-        return vectorstore.as_retriever()
+        return vectorstore.as_retriever(
+            search_type="similarity_score_threshold",
+            search_kwargs={"score_threshold": 0.8},
+        )
 
     retriever = RunnableLambda(_select_retriever)
     retriever_chain = create_history_aware_retriever(model, retriever, RETRIEVER_PROMPT)
