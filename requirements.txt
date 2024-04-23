@@ -87,6 +87,7 @@ pyproject_hooks==1.0.0
 pytest==8.1.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
+python-multipart==0.0.9
 PyYAML==6.0.1
 requests==2.31.0
 requests-oauthlib==2.0.0
