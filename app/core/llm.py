@@ -62,7 +62,7 @@ class CustomChatModel(BaseChatModel):
         for message in messages:
             messages_texts.append(_convert_message_to_text(message))
 
-        messages_text = "\n".join(messages_texts) + "ai:"
+        messages_text = "\n".join(messages_texts + ["ai:"])
 
         response = httpx.post(self.request_url, json={"content": messages_text})
         if response.status_code != 200:
