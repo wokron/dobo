@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Tuple, Type
 
 import dotenv
+from pydantic import Field
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -36,6 +37,10 @@ class ChainSettings(BaseSettings):
     debug: bool = False
 
 
+class VectorStoreSettings(BaseSettings):
+    score_threshold: float = Field(0.8, ge=0, le=1)
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(toml_file=CONFIG_PATH)
 
@@ -46,6 +51,7 @@ class Settings(BaseSettings):
     llm: LLMSettings = LLMSettings()
     embeddings: EmbeddingsSettings = EmbeddingsSettings()
     chain: ChainSettings = ChainSettings()
+    vectorstore: VectorStoreSettings = VectorStoreSettings()
 
     @classmethod
     def settings_customise_sources(

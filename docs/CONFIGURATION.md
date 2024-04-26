@@ -22,6 +22,9 @@ device = "cpu"
 [embeddings.config.encode_kwargs]
 normalize_embeddings = true
 
+[vectorstore]
+score_threshold = 0.7
+
 [chain]
 # debug = true
 # verbose = true

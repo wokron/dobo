@@ -72,7 +72,7 @@ def _create_chain(model):
         )
         return vectorstore.as_retriever(
             search_type="similarity_score_threshold",
-            search_kwargs={"score_threshold": 0.8},
+            search_kwargs={"score_threshold": settings.vectorstore.score_threshold},
         )
 
     def _create_history_aware_retriever(llm, retriever, prompt):
