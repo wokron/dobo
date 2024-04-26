@@ -4,11 +4,13 @@ from operator import itemgetter
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.runnables import RunnableLambda, RunnableConfig
-from langchain.chains import create_history_aware_retriever, create_retrieval_chain
+from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_community.vectorstores import Chroma
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 from langchain.globals import set_debug, set_verbose
+from langchain_core.runnables import RunnableBranch, RunnableParallel, RunnablePick
+from langchain_core.output_parsers import StrOutputParser
 
 from app.core.config import settings
 
@@ -73,16 +75,41 @@ def _create_chain(model):
             search_kwargs={"score_threshold": 0.8},
         )
 
+    def _create_history_aware_retriever(llm, retriever, prompt):
+
+        def _prepend_origin_input(data):
+            return data["input"] + " " + data["output"].content
+
+        retrieve_documents = RunnableBranch(
+            (
+                # Both empty string and empty list evaluate to False
+                lambda x: not x.get("chat_history", False),
+                # If no chat history, then we just pass input to retriever
+                (lambda x: x["input"]) | retriever,
+            ),
+            # If chat history, then we pass inputs to LLM chain, then to retriever
+            RunnableParallel(input=RunnablePick("input"), output=prompt | llm)
+            | RunnableLambda(_prepend_origin_input)
+            | StrOutputParser()
+            | retriever,
+        ).with_config(run_name="chat_retriever_chain")
+        return retrieve_documents
+
     retriever = RunnableLambda(_select_retriever)
-    retriever_chain = create_history_aware_retriever(model, retriever, RETRIEVER_PROMPT)
+    retriever_chain = _create_history_aware_retriever(
+        model, retriever, RETRIEVER_PROMPT
+    )
     document_chain = create_stuff_documents_chain(model, ANSWER_PROMPT)
     retrieval_chain = create_retrieval_chain(retriever_chain, document_chain)
 
     def _format_keywords(data):
         keywords: dict[str, str] = data["keywords"]
-        return "\n\n".join(
-            [f"**{keyword}**: {prompt}" for keyword, prompt in keywords.items()]
-        )
+        if len(keywords) == 0:
+            return "无补充信息"
+        else:
+            return "\n\n".join(
+                [f"**{keyword}**: {prompt}" for keyword, prompt in keywords.items()]
+            )
 
     chat_chain = {
         "keywords": RunnableLambda(_format_keywords),
