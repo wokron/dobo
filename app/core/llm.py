@@ -66,6 +66,9 @@ ANSWER_PROMPT = ChatPromptTemplate.from_messages(
 
 def _create_chain(model):
     def _select_retriever(text: str, config: RunnableConfig):
+        if config["configurable"]["vectorstore"] == None:
+            return ""
+
         vectorstore = Chroma(
             persist_directory=config["configurable"]["vectorstore"],
             embedding_function=embeddings,

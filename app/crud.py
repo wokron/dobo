@@ -142,7 +142,11 @@ def post_message_in_chat(session: Session, chat: Chat, message: MessageIn):
         config={
             "configurable": {
                 "session_id": chat.id,
-                "vectorstore": str(chat.document_set.get_vectorstore_dir()),
+                "vectorstore": (
+                    str(chat.document_set.get_vectorstore_dir())
+                    if chat.document_set != None
+                    else None
+                ),
             }
         },
     )
@@ -155,7 +159,9 @@ def post_message_in_chat(session: Session, chat: Chat, message: MessageIn):
             documents[doc_id].pages.append(doc_page_no)
         else:
             db_doc = session.get(Document, doc_id)
-            documents[doc_id] = DocumentOutWithPage.model_validate(db_doc, update={"pages": [doc_page_no]})
+            documents[doc_id] = DocumentOutWithPage.model_validate(
+                db_doc, update={"pages": [doc_page_no]}
+            )
 
     return ChatResponse(
         message=MessageOut(role="ai", content=result["answer"]),
