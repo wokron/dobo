@@ -3,6 +3,7 @@ import json
 from operator import itemgetter
 from typing import Any
 
+from fastapi import HTTPException, status
 import httpx
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
@@ -70,14 +71,17 @@ class CustomChatModel(BaseChatModel):
             messages_texts.append(_convert_message_to_text(message))
 
         messages_text = "\n".join(messages_texts + ["ai:"])
-
-        response = httpx.post(
-            self.request_url,
-            json={"content": messages_text},
-            timeout=self.timeout,
-        )
+        
+        try:
+            response = httpx.post(
+                self.request_url,
+                json={"content": messages_text},
+                timeout=self.timeout,
+            )
+        except httpx.TimeoutException:
+            raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="Request LLM api timeout")
         if response.status_code != 200:
-            raise Exception("Fail to request llm api")
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Fail to request LLM api")
 
         content = response.json()
 
