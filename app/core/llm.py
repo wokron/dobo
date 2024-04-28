@@ -19,7 +19,13 @@ from langchain_community.chat_message_histories.sql import (
 from langchain.globals import set_debug, set_verbose
 from langchain_core.language_models import BaseChatModel
 from langchain_core.outputs import ChatGeneration, ChatResult
-from langchain_core.messages import AIMessage, BaseMessage, ChatMessage, HumanMessage, SystemMessage
+from langchain_core.messages import (
+    AIMessage,
+    BaseMessage,
+    ChatMessage,
+    HumanMessage,
+    SystemMessage,
+)
 from langchain_core.runnables import RunnableBranch, RunnableParallel, RunnablePick
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import AIMessage, BaseMessage
@@ -48,6 +54,7 @@ embeddings = _get_embeddings()
 
 class CustomChatModel(BaseChatModel):
     request_url: str
+    timeout: float = 120.0
 
     def _generate(
         self,
@@ -64,7 +71,11 @@ class CustomChatModel(BaseChatModel):
 
         messages_text = "\n".join(messages_texts + ["ai:"])
 
-        response = httpx.post(self.request_url, json={"content": messages_text})
+        response = httpx.post(
+            self.request_url,
+            json={"content": messages_text},
+            timeout=self.timeout,
+        )
         if response.status_code != 200:
             raise Exception("Fail to request llm api")
 
