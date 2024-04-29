@@ -1,4 +1,5 @@
 from pathlib import Path
+from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.core.config import settings
@@ -31,8 +32,10 @@ class DocumentSetOut(SQLModel):
 
 
 class Document(SQLModel, table=True):
+    __table_args__ = (UniqueConstraint("document_set_id", "name"),)
+
     id: int | None = Field(default=None, primary_key=True)
-    name: str = Field(max_length=64, unique=True)
+    name: str = Field(max_length=64)
     page_num: int | None = Field(default=None, ge=0)
 
     document_set_id: int = Field(foreign_key="documentset.id")
