@@ -18,6 +18,7 @@ from app.models import (
     Document,
     DocumentOut,
     DocumentOutWithPage,
+    DocumentPage,
     DocumentSet,
     DocumentSetCreate,
     Keyword,
@@ -155,12 +156,14 @@ def post_message_in_chat(session: Session, chat: Chat, message: MessageIn):
     for doc in result["context"]:
         doc_id = doc.metadata["doc_id"]
         doc_page_no = doc.metadata["page"]
+        doc_content = doc.page_content
+        doc_page = DocumentPage(page_no=doc_page_no, content=doc_content)
         if doc_id in documents:
-            documents[doc_id].pages.append(doc_page_no)
+            documents[doc_id].pages.append(doc_page)
         else:
             db_doc = session.get(Document, doc_id)
             documents[doc_id] = DocumentOutWithPage.model_validate(
-                db_doc, update={"pages": [doc_page_no]}
+                db_doc, update={"pages": [doc_page]}
             )
 
     return ChatResponse(

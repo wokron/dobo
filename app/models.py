@@ -80,8 +80,13 @@ class MessageOut(SQLModel):
     content: str
 
 
+class DocumentPage(SQLModel):
+    page_no: int
+    content: str
+
+
 class DocumentOutWithPage(DocumentOut):
-    pages: list[int]
+    pages: list[DocumentPage]
 
 
 class ChatResponse(SQLModel):
