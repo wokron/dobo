@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, HTTPException, UploadFile, status
 from sqlmodel import select
 
 from app import crud
@@ -28,6 +28,18 @@ def delete_document_set(session: SessionDep, docset: DocumentSetDep):
 @router.get("/", response_model=list[DocumentSetOut])
 def list_document_sets(session: SessionDep):
     return session.exec(select(DocumentSet)).all()
+
+
+@router.get("/name/{docset_name}", response_model=DocumentSetOut)
+def get_document_set_by_name(session: SessionDep, docset_name: str):
+    db_docset = session.exec(
+        select(DocumentSet).where(DocumentSet.name == docset_name)
+    ).first()
+    if db_docset == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="DocumentSet not found"
+        )
+    return db_docset
 
 
 @router.post("/{docset_id}/docs", response_model=list[DocumentOut], tags=["docs"])
