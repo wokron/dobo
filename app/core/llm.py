@@ -75,7 +75,10 @@ def _create_chain(model):
         )
         return vectorstore.as_retriever(
             search_type="similarity_score_threshold",
-            search_kwargs={"score_threshold": settings.vectorstore.score_threshold},
+            search_kwargs={
+                "score_threshold": settings.vectorstore.score_threshold,
+                "k": settings.vectorstore.top_k,
+            },
         )
 
     def _create_history_aware_retriever(llm, retriever, prompt):
@@ -99,9 +102,14 @@ def _create_chain(model):
         return retrieve_documents
 
     retriever = RunnableLambda(_select_retriever)
-    retriever_chain = _create_history_aware_retriever(
-        model, retriever, RETRIEVER_PROMPT
-    )
+
+    if settings.vectorstore.history_aware:
+        retriever_chain = _create_history_aware_retriever(
+            model, retriever, RETRIEVER_PROMPT
+        )
+    else:
+        retriever_chain = (lambda x: x["input"]) | retriever
+
     document_chain = create_stuff_documents_chain(model, ANSWER_PROMPT)
     retrieval_chain = create_retrieval_chain(retriever_chain, document_chain)
 

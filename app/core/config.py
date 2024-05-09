@@ -39,6 +39,9 @@ class ChainSettings(BaseSettings):
 
 class VectorStoreSettings(BaseSettings):
     score_threshold: float = Field(0.8, ge=0, le=1)
+    history_aware: bool = True
+    top_k: int = Field(4, gt=0)
+
 
 
 class Settings(BaseSettings):
