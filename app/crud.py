@@ -1,7 +1,7 @@
 from pathlib import Path
 import shutil
 
-from fastapi import UploadFile
+from fastapi import UploadFile, HTTPException, status
 from sqlmodel import Session, col, delete, select
 from langchain_core.documents import Document as PagedDocument
 from langchain_core.messages import BaseMessage
@@ -24,6 +24,7 @@ from app.models import (
     KeywordCreate,
     MessageIn,
     MessageOut,
+    PagedDocumentOut,
 )
 from app.core import llm, ac
 
@@ -65,6 +66,25 @@ def create_document(session: Session, file: tuple[str, bytes], docset_id: int):
     _save_to_vectorstore(session, db_doc)
 
     return db_doc
+
+
+def get_document_page(doc: Document, page: int):
+    vectorstore_path: Path = doc.document_set.get_vectorstore_dir()
+    id = f"doc{doc.id}_page{page}"
+
+    vectorstore = Chroma(
+        persist_directory=str(vectorstore_path),
+        embedding_function=llm.embeddings,
+    )
+
+    paged_doc: PagedDocument = vectorstore._collection.get(ids=[id])["documents"]
+    if len(paged_doc) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Fail to find page {page} of document",
+        )
+
+    return PagedDocumentOut(content=paged_doc[0], page=page)
 
 
 def _save_to_vectorstore(session: Session, doc: Document):

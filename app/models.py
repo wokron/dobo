@@ -84,6 +84,11 @@ class DocumentOutWithPage(DocumentOut):
     pages: list[int]
 
 
+class PagedDocumentOut(SQLModel):
+    content: str
+    page: int
+
+
 class ChatResponse(SQLModel):
     message: MessageOut
     documents: list[DocumentOutWithPage]
