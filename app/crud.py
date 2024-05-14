@@ -230,6 +230,22 @@ def list_chat_history(chat_id: int):
     return messages_out
 
 
+def get_chat_history(chat_id: int, history_no: int):
+    history = SQLChatMessageHistory(
+        session_id=chat_id,
+        connection_string=settings.memory_url,
+    )
+    messages: list[BaseMessage] = history.messages
+    if history_no >= len(messages):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Fail to find history with no. {history_no}",
+        )
+    message: BaseMessage = messages[history_no]
+    message_out = MessageOut(role=message.type, content=message.content)
+    return message_out
+
+
 def create_keyword(session: Session, keyword_create: KeywordCreate):
     db_keyword = Keyword.model_validate(keyword_create)
     session.add(db_keyword)
