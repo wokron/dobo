@@ -67,9 +67,9 @@ def create_document(session: Session, file: tuple[str, bytes], docset_id: int):
     return db_doc
 
 
-def get_document_page(doc: Document, page: int):
+def get_document_page(doc: Document, page_no: int):
     vectorstore_path: Path = doc.document_set.get_vectorstore_dir()
-    id = f"doc{doc.id}_page{page}"
+    id = f"doc{doc.id}_page{page_no}"
 
     vectorstore = Chroma(
         persist_directory=str(vectorstore_path),
@@ -80,10 +80,10 @@ def get_document_page(doc: Document, page: int):
     if len(paged_doc) == 0:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Fail to find page {page} of document",
+            detail=f"Fail to find page {page_no} of document",
         )
 
-    return PagedDocumentOut(content=paged_doc[0], page=page)
+    return PagedDocumentOut(content=paged_doc[0], page=page_no)
 
 
 def _save_to_vectorstore(session: Session, doc: Document):

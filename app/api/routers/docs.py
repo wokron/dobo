@@ -21,6 +21,6 @@ def delete_document(session: SessionDep, doc: DocumentDep):
     crud.delete_document(session, doc)
 
 
-@router.get("/{doc_id}/page/{page}", response_model=PagedDocumentOut)
-def get_document_page(doc: DocumentDep, page: int):
-    return crud.get_document_page(doc, page)
+@router.get("/{doc_id}/page/{page_no}", response_model=PagedDocumentOut)
+def get_document_page(doc: DocumentDep, page_no: int):
+    return crud.get_document_page(doc, page_no)
