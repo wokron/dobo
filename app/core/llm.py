@@ -1,5 +1,7 @@
 from importlib import import_module
+import json
 from operator import itemgetter
+from typing import Any
 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
@@ -8,11 +10,23 @@ from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_community.vectorstores import Chroma
 from langchain_community.chat_message_histories import SQLChatMessageHistory
+from langchain_community.chat_message_histories.sql import (
+    BaseMessageConverter,
+    messages_from_dict,
+    message_to_dict,
+)
 from langchain.globals import set_debug, set_verbose
 from langchain_core.runnables import RunnableBranch, RunnableParallel, RunnablePick
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.messages import AIMessage, BaseMessage
+from sqlalchemy import JSON, Column, Integer, Text
+from sqlalchemy.orm import declarative_base
+from sqlmodel import Field, SQLModel, Session
+
 
 from app.core.config import settings
+from app.core.db import engine
+from app.models import Document, DocumentOutWithPage
 
 set_verbose(settings.chain.verbose)
 set_debug(settings.chain.debug)
@@ -62,6 +76,42 @@ ANSWER_PROMPT = ChatPromptTemplate.from_messages(
         ("system", "{keywords}"),
     ]
 )
+
+
+class MessageWithCiteConverter(BaseMessageConverter):
+
+    def __init__(self):
+        class Message(declarative_base()):  # type: ignore[valid-type, misc]
+            __tablename__ = "message_store"
+            id = Column(Integer, primary_key=True)
+            session_id = Column(Text)
+            message = Column(Text)
+            additional_kwargs = Column(JSON)
+
+        self.model_class = Message
+
+    def from_sql_model(self, sql_message: Any) -> BaseMessage:
+        message = messages_from_dict([json.loads(sql_message.message)])[0]
+        message.additional_kwargs = sql_message.additional_kwargs
+        return message
+
+    def to_sql_model(self, message: BaseMessage, session_id: str) -> Any:
+        return self.model_class(
+            session_id=session_id,
+            message=json.dumps(message_to_dict(message)),
+            additional_kwargs=message.additional_kwargs,
+        )
+
+    def get_sql_model_class(self) -> Any:
+        return self.model_class
+
+
+def get_sql_history(session_id: int):
+    return SQLChatMessageHistory(
+        session_id=session_id,
+        connection_string=settings.memory_url,
+        custom_message_converter=MessageWithCiteConverter(),
+    )
 
 
 def _create_chain(model):
@@ -122,23 +172,47 @@ def _create_chain(model):
                 [f"**{keyword}**: {prompt}" for keyword, prompt in keywords.items()]
             )
 
-    chat_chain = {
-        "keywords": RunnableLambda(_format_keywords),
-        "input": itemgetter("input"),
-        "chat_history": itemgetter("chat_history"),
-    } | retrieval_chain
+    chat_chain = (
+        {
+            "keywords": RunnableLambda(_format_keywords),
+            "input": itemgetter("input"),
+            "chat_history": itemgetter("chat_history"),
+        }
+        | retrieval_chain
+        | RunnableLambda(_attach_document_page)
+    )
 
     chain_with_chat_history = RunnableWithMessageHistory(
         chat_chain,
-        lambda session_id: SQLChatMessageHistory(
-            session_id=session_id, connection_string=settings.memory_url
-        ),
+        lambda session_id: get_sql_history(session_id),
         input_messages_key="input",
         history_messages_key="chat_history",
         output_messages_key="answer",
     )
 
     return chain_with_chat_history
+
+
+def _attach_document_page(result):
+    with Session(engine) as session:
+        documents: dict[int, DocumentOutWithPage] = {}
+        for doc in result["context"]:
+            doc_id = doc.metadata["doc_id"]
+            doc_page_no = doc.metadata["page"]
+            if doc_id in documents:
+                documents[doc_id].pages.append(doc_page_no)
+            else:
+                db_doc = session.get(Document, doc_id)
+                documents[doc_id] = DocumentOutWithPage.model_validate(
+                    db_doc, update={"pages": [doc_page_no]}
+                )
+
+    result["answer"] = AIMessage(
+        content=result["answer"],
+        additional_kwargs={"documents": [doc.model_dump() for doc in documents.values()]},
+    )
+
+    return result
 
 
 chain = _create_chain(model)

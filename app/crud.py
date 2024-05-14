@@ -12,7 +12,6 @@ from langchain_core.runnables import Runnable
 
 from app.core.config import settings
 from app.models import (
-    ChatResponse,
     Chat,
     ChatCreate,
     Document,
@@ -171,21 +170,15 @@ def post_message_in_chat(session: Session, chat: Chat, message: MessageIn):
         },
     )
 
-    documents: dict[int, DocumentOutWithPage] = {}
-    for doc in result["context"]:
-        doc_id = doc.metadata["doc_id"]
-        doc_page_no = doc.metadata["page"]
-        if doc_id in documents:
-            documents[doc_id].pages.append(doc_page_no)
-        else:
-            db_doc = session.get(Document, doc_id)
-            documents[doc_id] = DocumentOutWithPage.model_validate(
-                db_doc, update={"pages": [doc_page_no]}
-            )
+    message_out: BaseMessage = result["answer"]
 
-    return ChatResponse(
-        message=MessageOut(role="ai", content=result["answer"]),
-        documents=list(documents.values()),
+    return MessageOut(
+        role="ai",
+        content=message_out.content,
+        documents=[
+            DocumentOutWithPage.model_validate(doc)
+            for doc in message_out.additional_kwargs.get("documents", [])
+        ],
     )
 
 
@@ -210,40 +203,37 @@ def delete_chat(session: Session, chat: Chat):
 
 
 def _delete_chat_history(chat_id: int):
-    history = SQLChatMessageHistory(
-        session_id=chat_id,
-        connection_string=settings.memory_url,
-    )
+    history = llm.get_sql_history(chat_id)
     history.clear()
 
 
 def list_chat_history(chat_id: int):
-    history = SQLChatMessageHistory(
-        session_id=chat_id,
-        connection_string=settings.memory_url,
-    )
+    history = llm.get_sql_history(chat_id)
     messages: list[BaseMessage] = history.messages
     messages_out: list[MessageOut] = []
     for message in messages:
-        messages_out.append(MessageOut(role=message.type, content=message.content))
+        messages_out.append(
+            MessageOut(
+                role=message.type,
+                content=message.content,
+                documents=[
+                    DocumentOutWithPage.model_validate(doc)
+                    for doc in message.additional_kwargs.get("documents", [])
+                ],
+            )
+        )
 
     return messages_out
 
 
 def get_chat_history(chat_id: int, history_no: int):
-    history = SQLChatMessageHistory(
-        session_id=chat_id,
-        connection_string=settings.memory_url,
-    )
-    messages: list[BaseMessage] = history.messages
+    messages = list_chat_history(chat_id)
     if history_no >= len(messages):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Fail to find history with no. {history_no}",
         )
-    message: BaseMessage = messages[history_no]
-    message_out = MessageOut(role=message.type, content=message.content)
-    return message_out
+    return messages[history_no]
 
 
 def create_keyword(session: Session, keyword_create: KeywordCreate):

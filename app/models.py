@@ -75,23 +75,19 @@ class MessageIn(SQLModel):
     content: str
 
 
+class DocumentOutWithPage(DocumentOut):
+    pages: list[int]
+
+
 class MessageOut(SQLModel):
     role: str
     content: str
-
-
-class DocumentOutWithPage(DocumentOut):
-    pages: list[int]
+    documents: list[DocumentOutWithPage]
 
 
 class PagedDocumentOut(SQLModel):
     content: str
     page: int
-
-
-class ChatResponse(SQLModel):
-    message: MessageOut
-    documents: list[DocumentOutWithPage]
 
 
 class Keyword(SQLModel, table=True):
